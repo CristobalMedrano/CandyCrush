@@ -1,10 +1,40 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// Esto es header :o que lindi :3.
 void tablero();
 void menu();
 void menuSalir(int *opIngres);
 void abrirArchivo();
+
+// Hasta aqui.
+
+typedef struct
+{
+
+} Board ;
+
+typedef struct
+{
+
+} Game ;
+
+typedef struct
+{
+
+} Params ;
+
+typedef struct
+{
+	int posX;
+	int posY;
+
+} Position ;
+
+typedef struct
+{
+	
+} Candy ;
 
 int main()
 {
@@ -13,7 +43,6 @@ int main()
 	menu();
 	//Ejecuta Tablero
 	
-	getchar();
 	return 0;
 }
 
@@ -42,7 +71,7 @@ void tablero(int CanFilas, int CanColumnas)
     	printf("\n");
     	for (int y = 0; y < CanColumnas; ++y)
     	{
-    		printf("#");
+    		printf("%i",MatrizTablero[x][y]);
     		//printf("Cordenadas en x: %d, en y: %d del valor: %i\n", x, y, MatrizTablero[x][y]);
     	}
     }
@@ -53,7 +82,7 @@ void menu()
 	int opIngresada = -1;
 	do 
 	{
-		printf("##############################\n");
+		printf("\n##############################\n");
 		printf("#        Candy Crush         #\n");
 		printf("#            V.00            #\n");
 		printf("# Paradigmas de Programacion #\n");
@@ -65,10 +94,12 @@ void menu()
 			printf("Menu del juego, ingrese numero de opcion deseada: \n");
 			printf("0.- Jugar\n");
 			printf("1.- Salir\n");
+			fflush(stdin); // Limpiamos buffer de entrada.
 			if ((scanf("%d", &opIngresada) == 0) || (opIngresada < 0 || opIngresada > 1))
 			{
 			    while (getchar() != '\n');
 			    printf("\n- ERROR - Ingrese una opcion VALIDA.\n");
+			    fflush(stdin); // Limpiamos buffer de salida.
 			}
 
 		} while (opIngresada < 0 || opIngresada > 1);
@@ -80,10 +111,7 @@ void menu()
 		    case 1: menuSalir(&opIngresada);
 					break;
 		}
-	} while(opIngresada != 1); // Menu principal.
-    
-	
-	
+	} while(opIngresada != 1); // Menu principal.	
 }
 
 void menuSalir(int *opIngresada)
@@ -100,10 +128,12 @@ void menuSalir(int *opIngresada)
 				printf("¿Esta seguro que desea salir? (ingrese numero)\n");
 				printf("0.- No\n");
 				printf("1.- Si\n");
+				fflush(stdin);
 				if ((scanf("%d", &respuesta) == 0) || (respuesta < 0 || respuesta > 1))
 			{
 			    while (getchar() != '\n');
 			    printf("\n- ERROR - Ingrese una opcion VALIDA.\n");
+			    fflush(stdin);
 			}
 			} while (respuesta < 0 || respuesta > 1);
 
