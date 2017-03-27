@@ -59,8 +59,7 @@
 
 typedef struct Tablero
 {
-	int cantidadFilas;
-	int cantidadColumnas;
+	int dulce;
 } Board ;
 
 typedef struct Juego
@@ -104,7 +103,11 @@ typedef struct Dulce
 
 // Menu Cabecera
 // MenuCrearTablero
-void crearParametrosTablero(int Dificultad);
+Params* crearParametrosTablero(int Dificultad, int N, int M);
+void completarParametros(Params* nuevoParametro, int Dificultad, int N, int M);
+int verificarDificultad(int Dificultad, int Candy, int *CanRestante);
+
+int colocarCandy(int N,int M,Params *params);
 
 
 // MenuJugarModoPrueba
@@ -151,7 +154,40 @@ void jugarMover(){}
 // Funcion que crea un tablero valido.
 Board* createBoard(int N, int M, Params params)
 {
+	Board **nuevoTablero = (Board **)malloc(N * sizeof(Board *));
+	for (int i = 0; i < N; ++i)
+    nuevoTablero[i] = (Board *)malloc(M * sizeof(Board));
+	
+	// Rellenamos el tablero con -1, para evitar tener otro valor en la memoria.
+	for (int i = 0; i < N; ++i)
+	{
+		printf("\n");
+		for (int j = 0; j < M; ++j)
+		{
+			nuevoTablero[i][j].dulce = -1;
+			printf(" %d ", nuevoTablero[i][j]);
+		}
+	}
 
+	// Rellenamos con los dulces entregados en Params.
+	for (int i = 0; i < N; ++i)
+	{
+		for (int j = 0; j < M; ++j)
+		{
+			nuevoTablero[i][j].dulce = colocarCandy(N, M, &params);
+		}
+	}
+	return nuevoTablero;
+
+}
+
+int colocarCandy(int N,int M,Params *params)
+{
+	int candy;
+	// Falta hacer funcion que seleccione un caramelo random y lo retorne
+	// descontando la cantidad ya tenida.
+
+	return candy;
 }
 
 void guardarTablero(){}
@@ -160,19 +196,19 @@ void verificarTablero(){}
 void verificarCaramelos(){}
 void mostrarTablero(){}
 
-void crearParametrosTablero(int Dificultad)
+Params* crearParametrosTablero(int Dificultad, int N, int M)
 {
 	Params* nuevoParametro = malloc(sizeof(Params));
-	completarParametros(nuevoParametro, Dificultad);
-
-	free(nuevoParametro);
+	completarParametros(nuevoParametro, Dificultad, N, M);
+	//free(nuevoParametro);
+	return nuevoParametro;
 }
-void completarParametros(Params* nuevoParametro, int Dificultad)
+void completarParametros(Params* nuevoParametro, int Dificultad, int N, int M)
 {
-	int TotalCandy = 100;
+	int TotalCandy = (N*M);
 	int presionarBatidora = 0;
 	int CanRestante = 0;
-	srand(time(NULL));   // should only be called once
+	srand(time(NULL));
 
 	int candyCereza = 0;
 	int candyFrutilla = 0;
@@ -190,7 +226,7 @@ void completarParametros(Params* nuevoParametro, int Dificultad)
 
 	while (CanRestante < TotalCandy)
 	{
-		presionarBatidora = (rand() % (TotalCandy+1));
+		presionarBatidora = (rand() % (13));
 		switch(presionarBatidora)
 		{
 			case CEREZA: candyCereza += 
@@ -249,6 +285,7 @@ void completarParametros(Params* nuevoParametro, int Dificultad)
 	nuevoParametro->candyCampana = candyCampana;
 	nuevoParametro->candyTutifruti = candyTutifruti;
 	nuevoParametro->candyLlave = candyLlave;
+	nuevoParametro->Dificultad = Dificultad;
 
 	#ifdef DEBUG
 	printf("candyCereza = %d\n", nuevoParametro->candyCereza);
@@ -264,11 +301,12 @@ void completarParametros(Params* nuevoParametro, int Dificultad)
 	printf("candyCampana = %d\n", nuevoParametro->candyCampana);
 	printf("candyTutifruti = %d\n", nuevoParametro->candyTutifruti);
 	printf("candyLlave = %d\n", nuevoParametro->candyLlave);
+	printf("Dificultad = %d\n", nuevoParametro->Dificultad);
 	#endif
-
 }
 
-int verificarDificultad(int Dificultad, int Candy, int *CanRestante){
+int verificarDificultad(int Dificultad, int Candy, int *CanRestante)
+{
 
 	int arregloDulcesFACIL[5] = {CEREZA, FRUTILLA, MANZANA, MCEREZA, CAMPANA};
 	int arregloDulcesINTERMEDIO[9] = {CEREZA, FRUTILLA, MANZANA, DURAZNO, MCEREZA, 
@@ -414,15 +452,23 @@ void menuJugarModoPrueba()
 void menuCrearTablero()
 {
 	int opcionIngresada = obtenerOpcionIngresada(0, 3, MENU_CREAR_TABLERO);
+	Params* nuevoParametro;
+	Board* nuevoTablero;
 
 	switch (opcionIngresada)
 	{
-		case FACIL: crearParametrosTablero(FACIL);
+		case FACIL: nuevoParametro = crearParametrosTablero(FACIL, 3, 3);
+					nuevoTablero = createBoard(3, 3, *nuevoParametro);
+					seleccionMenu(MENU_CREAR_TABLERO);
 					break;
-		case INTERMEDIO: crearParametrosTablero(INTERMEDIO);
-								break;
-		case DIFICIL: crearParametrosTablero(DIFICIL);
-					break;
+		case INTERMEDIO: crearParametrosTablero(INTERMEDIO, 6, 6);
+						 nuevoTablero = createBoard(6, 6, *nuevoParametro);
+						 seleccionMenu(MENU_CREAR_TABLERO);
+						 break;
+		case DIFICIL: crearParametrosTablero(DIFICIL, 10, 10);
+					  nuevoTablero = createBoard(10, 10, *nuevoParametro);
+					  seleccionMenu(MENU_CREAR_TABLERO);
+					  break;
 		case VOLVER_MENU_JUGAR_MODO_PRUEBA: seleccionMenu(MENU_JUGAR_MODO_PRUEBA);
 										 	break; 
 	}
@@ -461,7 +507,7 @@ void mostrarMenuPrincipal()
 {
 	printf("\n##############################\n");
 	printf("#        Candy Crush         #\n");
-	printf("#            V.02            #\n");
+	printf("#            V.03            #\n");
 	printf("# Paradigmas de Programacion #\n");
 	printf("##############################\n\n");
 	printf("Menu del juego, ingrese numero de opcion deseada: \n");
