@@ -160,35 +160,28 @@ Board* createBoard(int N, int M, Params params)
 	
 	int* lista = ordenarCandy(N, M, &params);
 
+	#ifdef DEBUG
 	for (int i = 0; i < (N*M); ++i)
 	{
 		printf("| %d |",lista[i] );
 	}
+	#endif
 
+	int posicionar = 0;
 	// Rellenamos el tablero con -1, para evitar tener otro valor en la memoria.
 	for (int i = 0; i < N; ++i)
 	{
 		printf("\n");
 		for (int j = 0; j < M; ++j)
 		{
-			Tablero[i][j].matrizSTablero = -1;
+			Tablero[i][j].matrizSTablero = lista[posicionar];
+			posicionar++;
+
 			#ifdef DEBUG
-			printf(" %d ", Tablero[i][j]);
+			printf("| %d |", Tablero[i][j]);
 			#endif
 		}
 	}
-
-	// Rellenamos con los dulces entregados en Params.
-	for (int i = 0; i < N; ++i)
-	{
-		printf("\n");
-		for (int j = 0; j < M; ++j)
-		{
-			Tablero[i][j].matrizSTablero = "A";
-			printf("  %s  ", Tablero[i][j].matrizSTablero);
-		}
-	}
-	printf("\n");
 	
 	return Tablero;
 
@@ -300,6 +293,16 @@ int* ordenarCandy(int N,int M,Params *params)
 						 	i++;
 						 }
 						 break;
+			case MDURAZNO: if(candyMDurazno != 0)
+						 {
+						 	//Pone el caramelo dentro de una lista.
+						 	arregloDulces[i] = candySeleccionado;
+						 	//Resta 1 a la cantidad de cerezas.
+						 	candyMDurazno--;
+						 	//Aumenta el contador en 1.
+						 	i++;
+						 }
+						 break;
 			case MUVA: if(candyMUva != 0)
 						 {
 						 	//Pone el caramelo dentro de una lista.
@@ -343,7 +346,7 @@ int* ordenarCandy(int N,int M,Params *params)
 		}
 	}
 
-	for (int j = 0; j < TotalCandy; ++j)
+	/*for (int j = 0; j < TotalCandy; ++j)
 	{
 		printf(" %d ", arregloDulces[j]);
 	}
@@ -352,17 +355,14 @@ int* ordenarCandy(int N,int M,Params *params)
 	printf("candyFrutilla = %d\n", params->candyFrutilla);
 	printf("candyManzana = %d\n", params->candyManzana);
 	printf("candyDurazno = %d\n", params->candyDurazno);
-	printf("candyUva = %d\n", params->candyUva);
 	printf("candyMCereza = %d\n", params->candyMCereza);
 	printf("candyMFrutilla = %d\n", params->candyMFrutilla);
 	printf("candyMManzana = %d\n", params->candyMManzana);
 	printf("candyMDurazno = %d\n", params->candyMDurazno);
-	printf("candyMUva = %d\n", params->candyMUva);
 	printf("candyCampana = %d\n", params->candyCampana);
 	printf("candyTutifruti = %d\n", params->candyTutifruti);
-	printf("candyLlave = %d\n", params->candyLlave);
 	printf("Dificultad = %d\n", params->Dificultad);
-	#endif
+	#endif*/
 	
 	// Falta hacer funcion que seleccione un caramelo random y lo retorne
 	// descontando la cantidad ya tenida.
@@ -637,16 +637,16 @@ void menuCrearTablero()
 
 	switch (opcionIngresada)
 	{
-		case FACIL: nuevoParametro = crearParametrosTablero(FACIL, 3, 3);
-					nuevoTablero = createBoard(3, 3, *nuevoParametro);
+		case FACIL: nuevoParametro = crearParametrosTablero(FACIL, 5, 5);
+					nuevoTablero = createBoard(5, 5, *nuevoParametro);
 					seleccionMenu(MENU_CREAR_TABLERO);
 					break;
-		case INTERMEDIO: nuevoParametro = crearParametrosTablero(INTERMEDIO, 6, 6);
-						 nuevoTablero = createBoard(6, 6, *nuevoParametro);
+		case INTERMEDIO: nuevoParametro = crearParametrosTablero(INTERMEDIO, 10, 10);
+						 nuevoTablero = createBoard(10, 10, *nuevoParametro);
 						 seleccionMenu(MENU_CREAR_TABLERO);
 						 break;
-		case DIFICIL: nuevoParametro = crearParametrosTablero(DIFICIL, 10, 10);
-					  nuevoTablero = createBoard(10, 10, *nuevoParametro);
+		case DIFICIL: nuevoParametro = crearParametrosTablero(DIFICIL, 15, 15);
+					  nuevoTablero = createBoard(15, 15, *nuevoParametro);
 					  seleccionMenu(MENU_CREAR_TABLERO);
 					  break;
 		case VOLVER_MENU_JUGAR_MODO_PRUEBA: seleccionMenu(MENU_JUGAR_MODO_PRUEBA);
