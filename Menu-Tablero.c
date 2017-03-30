@@ -59,6 +59,8 @@
 
 typedef struct Tablero
 {
+	int Filas;
+	int Columnas;
 	int **matrizSTablero;
 } Board ;
 
@@ -108,7 +110,7 @@ void completarParametros(Params* nuevoParametro, int Dificultad, int N, int M);
 int verificarDificultad(int Dificultad, int Candy, int *CanRestante);
 
 int* ordenarCandy(int N,int M,Params *params);
-
+int convertirFruta(Board* b, int Filas, int Columnas);
 
 // MenuJugarModoPrueba
 void jugarMover();
@@ -117,7 +119,7 @@ void guardarTablero();
 void cargarTablero();
 void verificarTablero();
 void verificarCaramelos();
-void mostrarTablero();
+void print(Board *b);
 
 // MenuPrincipal
 void jugar();
@@ -154,16 +156,20 @@ void jugarMover(){}
 // Funcion que crea un tablero valido.
 Board* createBoard(int N, int M, Params params)
 {
-	Board **Tablero = (Board **)malloc(N * sizeof(Board *));
-	for (int i = 0; i < N; ++i)
-    Tablero[i] = (Board *)malloc(M * sizeof(Board));
+	Board * nuevoTablero = (Board*)malloc(sizeof(Board));
 	
+	int **mTablero = (int **)malloc(N * sizeof(int *));
+	for (int i = 0; i < N; ++i)
+    mTablero[i] = (int *)malloc(M * sizeof(int));
+
+	//nuevoTablero->matrizSTablero
+
 	int* lista = ordenarCandy(N, M, &params);
 
 	#ifdef DEBUG
 	for (int i = 0; i < (N*M); ++i)
 	{
-		printf("| %d |",lista[i] );
+		printf("%d",lista[i] );
 	}
 	#endif
 
@@ -171,20 +177,23 @@ Board* createBoard(int N, int M, Params params)
 	// Rellenamos el tablero con -1, para evitar tener otro valor en la memoria.
 	for (int i = 0; i < N; ++i)
 	{
-		printf("\n");
-		for (int j = 0; j < M; ++j)
-		{
-			Tablero[i][j].matrizSTablero = lista[posicionar];
+   		for (int j = 0; j < M; ++j)
+		{			
+			//Tablero[i][j].matrizSTablero = "A";
+
+			mTablero[i][j] = lista[posicionar];
 			posicionar++;
 
-			#ifdef DEBUG
-			printf("| %d |", Tablero[i][j]);
+			#ifdef DEBUG2
+			printf("%d\n", mTablero[i][j]);
 			#endif
 		}
 	}
-	
-	return Tablero;
+	nuevoTablero->matrizSTablero = mTablero;
+	nuevoTablero->Filas = N;
+	nuevoTablero->Columnas = M;
 
+	return nuevoTablero;
 }
 
 int* ordenarCandy(int N,int M,Params *params)
@@ -374,7 +383,113 @@ void guardarTablero(){}
 void cargarTablero(){}
 void verificarTablero(){}
 void verificarCaramelos(){}
-void mostrarTablero(){}
+void print(Board *b)
+{
+	int Filas = b->Filas;
+	//printf("\n %d \n", filas);
+	// ESTE CODIGO SIRVE
+	// b->matrizSTablero[0][0]
+	int Columnas = b->Columnas;
+	int count = 0;
+	int cantFila = 0;
+
+
+	while(cantFila < Filas)
+	{
+		count = 0;
+		if(count == 0)
+		{
+			printf("\n#");
+			for (int i = 0; i < Columnas; ++i)
+			{
+				printf("#####");
+				printf("#");
+			}
+			count++;
+		}
+		
+		if(count == 1)
+		{
+			printf("\n#");
+			for (int i = 0; i < Columnas; ++i)
+			{
+				printf("     ");
+				printf("#");
+			}
+			count++;
+		}
+		
+		if (count == 2)
+		{
+			printf("\n#");
+			for (int i = 0; i < Columnas; ++i)
+			{
+				printf("  %s  ", convertirFruta(b, cantFila, i));
+				printf("#");
+			}
+			count++;
+		}
+
+		if (count == 3)
+		{
+			
+			printf("\n#");
+			for (int i = 0; i < Columnas; ++i)
+			{
+				printf("     ");
+				printf("#");
+			}
+			count++;
+		}
+		if (cantFila == Filas-1)
+		{
+			printf("\n#");
+			for (int i = 0; i < Columnas; ++i)
+			{
+				printf("#####");
+				printf("#");
+			}
+			count++;
+		}
+		cantFila++;
+	}
+	printf("\n");
+}
+
+int convertirFruta(Board* b, int Filas, int Columnas)
+{
+	int candyConvertido = -1;
+	switch (b->matrizSTablero[Filas][Columnas]) 
+	{
+		case CEREZA: candyConvertido = "c";
+					 return candyConvertido;
+		case FRUTILLA:candyConvertido = "f";
+					 return candyConvertido;
+		case MANZANA:candyConvertido = "m";
+					 return candyConvertido;
+		case DURAZNO:candyConvertido = "d";
+					 return candyConvertido;
+		case UVA:candyConvertido = "u";
+					 return candyConvertido;
+		case MCEREZA:candyConvertido = "C";
+					 return candyConvertido;
+		case MFRUTILLA:candyConvertido = "F";
+					 return candyConvertido;
+		case MMANZANA:candyConvertido = "M";
+					 return candyConvertido;
+		case MDURAZNO:candyConvertido = "D";
+					 return candyConvertido;
+		case MUVA:candyConvertido = "U";
+					 return candyConvertido;
+		case CAMPANA:candyConvertido = "B";
+					 return candyConvertido;
+		case TUTIFRUTI:candyConvertido = "T";
+					 return candyConvertido;
+		case LLAVE:candyConvertido = "L";
+					 return candyConvertido;
+	}
+	return 0;
+}
 
 Params* crearParametrosTablero(int Dificultad, int N, int M)
 {
@@ -621,7 +736,7 @@ void menuJugarModoPrueba()
 						  		break;
 		case VERIFICAR_CARAMELOS: verificarCaramelos();
 						  		  break;
-		case MOSTRAR_TABLERO: mostrarTablero();
+		case MOSTRAR_TABLERO: //print(b);
 							  break;
 		case VOLVER_MENU_PRINCIPAL: seleccionMenu(MENU_PRINCIPAL);
 					 break;
@@ -637,17 +752,20 @@ void menuCrearTablero()
 
 	switch (opcionIngresada)
 	{
-		case FACIL: nuevoParametro = crearParametrosTablero(FACIL, 5, 5);
-					nuevoTablero = createBoard(5, 5, *nuevoParametro);
-					seleccionMenu(MENU_CREAR_TABLERO);
+		case FACIL: nuevoParametro = crearParametrosTablero(FACIL, 4, 4);
+					nuevoTablero = createBoard(4, 4, *nuevoParametro);
+					print(nuevoTablero);
+					seleccionMenu(MENU_JUGAR_MODO_PRUEBA);
 					break;
-		case INTERMEDIO: nuevoParametro = crearParametrosTablero(INTERMEDIO, 10, 10);
-						 nuevoTablero = createBoard(10, 10, *nuevoParametro);
-						 seleccionMenu(MENU_CREAR_TABLERO);
+		case INTERMEDIO: nuevoParametro = crearParametrosTablero(INTERMEDIO, 7, 7);
+						 nuevoTablero = createBoard(7, 7, *nuevoParametro);
+						 print(nuevoTablero);
+						 seleccionMenu(MENU_JUGAR_MODO_PRUEBA);
 						 break;
-		case DIFICIL: nuevoParametro = crearParametrosTablero(DIFICIL, 15, 15);
-					  nuevoTablero = createBoard(15, 15, *nuevoParametro);
-					  seleccionMenu(MENU_CREAR_TABLERO);
+		case DIFICIL: nuevoParametro = crearParametrosTablero(DIFICIL, 10, 15);
+					  nuevoTablero = createBoard(10, 15, *nuevoParametro);
+					  print(nuevoTablero);
+					  seleccionMenu(MENU_JUGAR_MODO_PRUEBA);
 					  break;
 		case VOLVER_MENU_JUGAR_MODO_PRUEBA: seleccionMenu(MENU_JUGAR_MODO_PRUEBA);
 										 	break; 
@@ -687,7 +805,7 @@ void mostrarMenuPrincipal()
 {
 	printf("\n##############################\n");
 	printf("#        Candy Crush         #\n");
-	printf("#            V.03            #\n");
+	printf("#            V.06            #\n");
 	printf("# Paradigmas de Programacion #\n");
 	printf("##############################\n\n");
 	printf("Menu del juego, ingrese numero de opcion deseada: \n");
