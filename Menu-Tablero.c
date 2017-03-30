@@ -386,7 +386,6 @@ void verificarCaramelos(){}
 void print(Board *b)
 {
 	int Filas = b->Filas;
-	//printf("\n %d \n", filas);
 	// ESTE CODIGO SIRVE
 	// b->matrizSTablero[0][0]
 	int Columnas = b->Columnas;
@@ -397,9 +396,25 @@ void print(Board *b)
 	while(cantFila < Filas)
 	{
 		count = 0;
+		// Ubico numeros de guia superiores.
+		if(count == 0 && cantFila == 0)
+		{
+			printf("\n    ");
+			for (int i = 0; i < Columnas; ++i)
+			{
+				if (i > 9)
+				{
+					printf("  %d  ", i);
+				} else
+				{
+					printf("   %d  ", i);
+				}
+			}
+		}
+		// Ubico linea Horizontal de borde superior de cada fruta.
 		if(count == 0)
 		{
-			printf("\n#");
+			printf("\n    #");
 			for (int i = 0; i < Columnas; ++i)
 			{
 				printf("#####");
@@ -408,9 +423,10 @@ void print(Board *b)
 			count++;
 		}
 		
+		// Ubico linea Horizontal de espacio antes de la fruta.
 		if(count == 1)
 		{
-			printf("\n#");
+			printf("\n    #");
 			for (int i = 0; i < Columnas; ++i)
 			{
 				printf("     ");
@@ -419,9 +435,16 @@ void print(Board *b)
 			count++;
 		}
 		
+		// Ubico numero de guias laterales.
 		if (count == 2)
 		{
-			printf("\n#");
+			printf("\n  %d ", cantFila);		
+		}
+
+		// Ubico linea Horizontal de espacio con Fruta.
+		if (count == 2)
+		{
+			printf("#");
 			for (int i = 0; i < Columnas; ++i)
 			{
 				printf("  %s  ", convertirFruta(b, cantFila, i));
@@ -430,10 +453,11 @@ void print(Board *b)
 			count++;
 		}
 
+		// Ubico linea Horizontal de espacio despues de la fruta.
 		if (count == 3)
 		{
 			
-			printf("\n#");
+			printf("\n    #");
 			for (int i = 0; i < Columnas; ++i)
 			{
 				printf("     ");
@@ -441,9 +465,11 @@ void print(Board *b)
 			}
 			count++;
 		}
+
+		// Ubico linea Horizontal de borde inferior para cerrar.
 		if (cantFila == Filas-1)
 		{
-			printf("\n#");
+			printf("\n    #");
 			for (int i = 0; i < Columnas; ++i)
 			{
 				printf("#####");
@@ -453,7 +479,7 @@ void print(Board *b)
 		}
 		cantFila++;
 	}
-	printf("\n");
+	printf("\n\n");
 }
 
 int convertirFruta(Board* b, int Filas, int Columnas)
@@ -498,6 +524,7 @@ Params* crearParametrosTablero(int Dificultad, int N, int M)
 	//free(nuevoParametro);
 	return nuevoParametro;
 }
+
 void completarParametros(Params* nuevoParametro, int Dificultad, int N, int M)
 {
 	int TotalCandy = (N*M);
@@ -741,7 +768,6 @@ void menuJugarModoPrueba()
 		case VOLVER_MENU_PRINCIPAL: seleccionMenu(MENU_PRINCIPAL);
 					 break;
 	}
-
 }
 
 void menuCrearTablero()
