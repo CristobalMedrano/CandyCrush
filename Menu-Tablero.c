@@ -4,7 +4,7 @@
 
 // #define
 
-#define DEBUG
+//#define DEBUG
 #define FALSE 0
 #define TRUE 1
 #define SIN_INGRESO -1
@@ -119,6 +119,7 @@ void guardarTablero();
 void cargarTablero();
 void verificarTablero();
 void verificarCaramelos();
+void validarTablero(int** mTablero, int i, int j, int N, int M);
 void print(Board *b);
 
 // MenuPrincipal
@@ -163,7 +164,6 @@ Board* createBoard(int N, int M, Params params)
     mTablero[i] = (int *)malloc(M * sizeof(int));
 
 	//nuevoTablero->matrizSTablero
-
 	int* lista = ordenarCandy(N, M, &params);
 
 	#ifdef DEBUG
@@ -187,6 +187,14 @@ Board* createBoard(int N, int M, Params params)
 			#ifdef DEBUG2
 			printf("%d\n", mTablero[i][j]);
 			#endif
+		}
+	}
+
+	for (int i = 0; i < N; ++i)
+	{
+		for (int j = 0; j < M; ++j)
+		{
+			validarTablero(mTablero,i ,j, N, M);
 		}
 	}
 	nuevoTablero->matrizSTablero = mTablero;
@@ -377,6 +385,29 @@ int* ordenarCandy(int N,int M,Params *params)
 	// descontando la cantidad ya tenida.
 
 	return arregloDulces;
+}
+
+void validarTablero(int** mTablero, int i, int j, int N, int M)
+{
+	int candy = mTablero[i][j];
+	int count = 0;
+	while (count < N-3 & count < M - 3)
+	{
+		int aux;
+		if(mTablero[i][j] == candy && mTablero[i][j+1] == candy && mTablero[i][j+2] == candy)
+		{
+			printf("Pos1: %d\n", mTablero[i][j]);
+			printf("Pos2: %d\n", mTablero[i][j+1]);
+			printf("Pos3: %d\n", mTablero[i][j+2]);
+			/*aux = mTablero[i][j];
+			mTablero[i][j] = mTablero[i+1][j];
+			mTablero[i+1][j] = aux;*/
+		}
+		count++;
+	}
+	
+	
+
 }
 
 void guardarTablero(){}
