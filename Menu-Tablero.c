@@ -4,7 +4,7 @@
 
 // #define
 
-//#define DEBUG
+#define DEBUG
 #define FALSE 0
 #define TRUE 1
 #define SIN_INGRESO -1
@@ -183,13 +183,12 @@ Board* createBoard(int N, int M, Params params)
 
 			mTablero[i][j] = lista[posicionar];
 			posicionar++;
-
-			#ifdef DEBUG2
-			printf("%d\n", mTablero[i][j]);
-			#endif
 		}
 	}
-
+	nuevoTablero->matrizSTablero = mTablero;
+	nuevoTablero->Filas = N;
+	nuevoTablero->Columnas = M;
+	print(nuevoTablero);
 	for (int i = 0; i < N; ++i)
 	{
 		for (int j = 0; j < M; ++j)
@@ -200,6 +199,7 @@ Board* createBoard(int N, int M, Params params)
 	nuevoTablero->matrizSTablero = mTablero;
 	nuevoTablero->Filas = N;
 	nuevoTablero->Columnas = M;
+
 
 	return nuevoTablero;
 }
@@ -394,16 +394,46 @@ void validarTablero(int** mTablero, int i, int j, int N, int M)
 	while (count < N-3 & count < M - 3)
 	{
 		int aux;
+		// Revisar a la derecha.
 		if(mTablero[i][j] == candy && mTablero[i][j+1] == candy && mTablero[i][j+2] == candy)
 		{
 			printf("Pos1: %d\n", mTablero[i][j]);
 			printf("Pos2: %d\n", mTablero[i][j+1]);
 			printf("Pos3: %d\n", mTablero[i][j+2]);
-			/*aux = mTablero[i][j];
-			mTablero[i][j] = mTablero[i+1][j];
-			mTablero[i+1][j] = aux;*/
+			// Generar Random
+			// random numero mayor a i o j y menor que n y M
+			int x = (rand() % i);
+			int y = (rand() % j);
+			
+			// Ubicar random
+			aux = mTablero[i][j];
+			printf("CarameloX++ : %d, PosX: %d, PosY: %d\n", aux, i, j);
+			mTablero[i][j] = mTablero[x][y];
+			printf("CarameloX++ : %d, PosX: %d, PosY: %d\n", mTablero[i][j], x, y);
+			mTablero[x][y] = aux;
+		}
+		// Revisar hacia abajo
+		if(M < M-3)
+		{
+			if (mTablero[i][j] == candy && mTablero[i+1][j] == candy && mTablero[i+2][j] == candy)
+			{
+				printf("Pos1: %d\n", mTablero[i][j]);
+				printf("Pos2: %d\n", mTablero[i+1][j]);
+				printf("Pos3: %d\n", mTablero[i+2][j]);
+				// Generar Random
+				int x = rand() % N+i;
+				int y = rand() % M+j;
+				
+				// Ubicar random
+				aux = mTablero[i][j];
+				printf("CarameloY++ : %d, PosX: %d, PosY: %d\n", aux, i, j);
+				mTablero[i][j] = mTablero[x][y];
+				printf("CarameloY++ : %d, PosX: %d, PosY: %d\n", mTablero[i][j], x, y);
+				mTablero[x][y] = aux;
+			}
 		}
 		count++;
+		printf("Hola estoy en el ciclo\n");
 	}
 	
 	
