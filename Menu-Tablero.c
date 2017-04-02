@@ -45,15 +45,11 @@
 #define FRUTILLA 1
 #define MANZANA 2
 #define DURAZNO 3
-#define UVA 4
-#define MCEREZA 5
-#define MFRUTILLA 6
-#define MMANZANA 7
-#define MDURAZNO 8
-#define MUVA 9
-#define CAMPANA 10
-#define TUTIFRUTI 11
-#define LLAVE 12
+#define MCEREZA 4
+#define MFRUTILLA 5
+#define MMANZANA 6
+#define TUTIFRUTI 7
+#define LLAVE 8
 
 // Estructuras
 
@@ -75,30 +71,31 @@ typedef struct Parametros
 	int candyFrutilla;
 	int candyManzana;
 	int candyDurazno;
-	int candyUva;
 	int candyMCereza;
 	int candyMFrutilla;
 	int candyMManzana;
-	int candyMDurazno;
-	int candyMUva;
-	int candyCampana;
 	int candyTutifruti;
 	int candyLlave;
 	int Dificultad;
 	//int nivel;
 } Params ;
 
+typedef struct Dulce
+{
+	int Fruta;
+	int Dureza;
+	int Poder;
+} Candy ;
+
 typedef struct Posicion
 {
 	int posX;
 	int posY;
+	Candy candy;
 
 } Position ;
 
-typedef struct Dulce
-{
-	int tipoCandy;
-} Candy ;
+
 
 
 // Cabecera
@@ -108,8 +105,9 @@ typedef struct Dulce
 Params* crearParametrosTablero(int Dificultad, int N, int M);
 void completarParametros(Params* nuevoParametro, int Dificultad, int N, int M);
 int verificarDificultad(int Dificultad, int Candy, int *CanRestante);
+int* obtenerListaCaramelo(int N,int M,Params *params);
 
-int* ordenarCandy(int N,int M,Params *params);
+int** obtenerMatrizCandy(int N,int M,Params *params);
 int convertirFruta(Board* b, int Filas, int Columnas);
 
 // MenuJugarModoPrueba
@@ -158,286 +156,134 @@ void jugarMover(){}
 Board* createBoard(int N, int M, Params params)
 {
 	Board * nuevoTablero = (Board*)malloc(sizeof(Board));
-	
-	int **mTablero = (int **)malloc(N * sizeof(int *));
-	for (int i = 0; i < N; ++i)
-    mTablero[i] = (int *)malloc(M * sizeof(int));
+	int** mTablero = obtenerMatrizCandy(N, M, &params);
 
-	//nuevoTablero->matrizSTablero
-	int* lista = ordenarCandy(N, M, &params);
-
-	#ifdef DEBUG
-	for (int i = 0; i < (N*M); ++i)
-	{
-		printf("%d",lista[i] );
-	}
-	#endif
-
-	int posicionar = 0;
-	// Rellenamos el tablero con -1, para evitar tener otro valor en la memoria.
-	for (int i = 0; i < N; ++i)
-	{
-   		for (int j = 0; j < M; ++j)
-		{			
-			//Tablero[i][j].matrizSTablero = "A";
-
-			mTablero[i][j] = lista[posicionar];
-			posicionar++;
-		}
-	}
+	// Guardamos el tablero temporal.
 	nuevoTablero->matrizSTablero = mTablero;
+	// Guardamos la cantidad de filas.
 	nuevoTablero->Filas = N;
+	// Guardamos la cantidad de columnas.
 	nuevoTablero->Columnas = M;
 	print(nuevoTablero);
-	for (int i = 0; i < N; ++i)
-	{
-		for (int j = 0; j < M; ++j)
-		{
-			validarTablero(mTablero,i ,j, N, M);
-		}
-	}
-	nuevoTablero->matrizSTablero = mTablero;
-	nuevoTablero->Filas = N;
-	nuevoTablero->Columnas = M;
-
 
 	return nuevoTablero;
 }
 
-int* ordenarCandy(int N,int M,Params *params)
+int** obtenerMatrizCandy(int N,int M,Params *params)
 {
-	int TotalCandy = (N*M);
-	int candySeleccionado = 0;
-	int *arregloDulces = (int*)malloc(sizeof(int)*TotalCandy);
-	int i = 0;
+	int **mTablero = (int **)malloc(N * sizeof(int *));
+					for (int i = 0; i < N; ++i)
+					mTablero[i] = (int *)malloc(M * sizeof(int));
 
+	int* listaCaramelo = obtenerListaCaramelo(N, M, params);
+
+	int seleccionador = 0;
+	for (int i = 0; i < N; i++)
+	{
+		for (int j = 0; j < M; j++)
+		{
+			mTablero[i][j] = listaCaramelo[seleccionador];
+			seleccionador++;
+		}
+	}
+	return mTablero;
+}
+
+int* obtenerListaCaramelo(int N,int M,Params *params)
+{
+
+	int* listaCaramelo = malloc(sizeof(int)*(N*M));
 	int candyCereza = params->candyCereza;
 	int candyFrutilla = params->candyFrutilla;
 	int candyManzana = params->candyManzana;
 	int candyDurazno = params->candyDurazno;
-	int candyUva = params->candyUva;
 	int candyMCereza = params->candyMCereza;
 	int candyMFrutilla = params->candyMFrutilla;
 	int candyMManzana = params->candyMManzana;
-	int candyMDurazno = params->candyMDurazno;
-	int candyMUva = params->candyMUva;
-	int candyCampana = params->candyCampana;
 	int candyTutifruti = params->candyTutifruti;
 	int candyLlave = params->candyLlave;
 
-	while(i < TotalCandy)
-		// Selecciona un caramelo al azar.
-	{	candySeleccionado = (rand() % 13);
+	int candySeleccionado = -1;
+	int count = 0;
+	
+	while (count < (N*M))
+	{
+		candySeleccionado = (rand() % 9);
 		switch (candySeleccionado)
 		{
-			case CEREZA: if(candyCereza != 0)
-						 {
-						 	//Pone el caramelo dentro de una lista.
-						 	arregloDulces[i] = candySeleccionado;
-						 	//Resta 1 a la cantidad de cerezas.
-						 	candyCereza--;
-						 	//Aumenta el contador en 1.
-						 	i++;
-						 }
-						 break;
+			case CEREZA:
+
+			if (candyCereza != 0)
+			{ 
+				listaCaramelo[count] = candySeleccionado;
+				candyCereza--;
+				count++;		
+			}
+			
+			break;
+				
+						
 			case FRUTILLA: if(candyFrutilla != 0)
-						 {
-						 	//Pone el caramelo dentro de una lista.
-						 	arregloDulces[i] = candySeleccionado;
-						 	//Resta 1 a la cantidad de cerezas.
-						 	candyFrutilla--;
-						 	//Aumenta el contador en 1.
-						 	i++;
-						 }
+						{
+							listaCaramelo[count] = candySeleccionado;
+							candyFrutilla--;
+							count++;					
+					 	}
 						 break;
 			case MANZANA: if(candyManzana != 0)
 						 {
-						 	//Pone el caramelo dentro de una lista.
-						 	arregloDulces[i] = candySeleccionado;
-						 	//Resta 1 a la cantidad de cerezas.
+						 	listaCaramelo[count] = candySeleccionado;
 						 	candyManzana--;
-						 	//Aumenta el contador en 1.
-						 	i++;
+						 	count++;					 
 						 }
 						 break;
 			case DURAZNO: if(candyDurazno != 0)
 						 {
-						 	//Pone el caramelo dentro de una lista.
-						 	arregloDulces[i] = candySeleccionado;
-						 	//Resta 1 a la cantidad de cerezas.
+						 	listaCaramelo[count] = candySeleccionado;
 						 	candyDurazno--;
-						 	//Aumenta el contador en 1.
-						 	i++;
-						 }
-						 break;
-			case UVA: if(candyUva != 0)
-						 {
-						 	//Pone el caramelo dentro de una lista.
-						 	arregloDulces[i] = candySeleccionado;
-						 	//Resta 1 a la cantidad de cerezas.
-						 	candyUva--;
-						 	//Aumenta el contador en 1.
-						 	i++;
+						 	count++;					 
 						 }
 						 break;
 			case MCEREZA: if(candyMCereza != 0)
 						 {
-						 	//Pone el caramelo dentro de una lista.
-						 	arregloDulces[i] = candySeleccionado;
-						 	//Resta 1 a la cantidad de cerezas.
+						 	listaCaramelo[count] = candySeleccionado;
 						 	candyMCereza--;
-						 	//Aumenta el contador en 1.
-						 	i++;
+						 	count++;						 
 						 }
 						 break;
 			case MFRUTILLA: if(candyMFrutilla != 0)
 						 {
-						 	//Pone el caramelo dentro de una lista.
-						 	arregloDulces[i] = candySeleccionado;
-						 	//Resta 1 a la cantidad de cerezas.
+						 	listaCaramelo[count] = candySeleccionado;
 						 	candyMFrutilla--;
-						 	//Aumenta el contador en 1.
-						 	i++;
-						 }
+						 	count++;						 	
+						  }
 						 break;
 			case MMANZANA: if(candyMManzana != 0)
 						 {
-						 	//Pone el caramelo dentro de una lista.
-						 	arregloDulces[i] = candySeleccionado;
-						 	//Resta 1 a la cantidad de cerezas.
+						 	listaCaramelo[count] = candySeleccionado;
 						 	candyMManzana--;
-						 	//Aumenta el contador en 1.
-						 	i++;
-						 }
-						 break;
-			case MDURAZNO: if(candyMDurazno != 0)
-						 {
-						 	//Pone el caramelo dentro de una lista.
-						 	arregloDulces[i] = candySeleccionado;
-						 	//Resta 1 a la cantidad de cerezas.
-						 	candyMDurazno--;
-						 	//Aumenta el contador en 1.
-						 	i++;
-						 }
-						 break;
-			case MUVA: if(candyMUva != 0)
-						 {
-						 	//Pone el caramelo dentro de una lista.
-						 	arregloDulces[i] = candySeleccionado;
-						 	//Resta 1 a la cantidad de cerezas.
-						 	candyMUva--;
-						 	//Aumenta el contador en 1.
-						 	i++;
-						 }
-						 break;
-			case CAMPANA: if(candyCampana != 0)
-						 {
-						 	//Pone el caramelo dentro de una lista.
-						 	arregloDulces[i] = candySeleccionado;
-						 	//Resta 1 a la cantidad de cerezas.
-						 	candyCampana--;
-						 	//Aumenta el contador en 1.
-						 	i++;
+						 	count++;						 
 						 }
 						 break;
 			case TUTIFRUTI: if(candyTutifruti != 0)
 						 {
-						 	//Pone el caramelo dentro de una lista.
-						 	arregloDulces[i] = candySeleccionado;
-						 	//Resta 1 a la cantidad de cerezas.
+						 	listaCaramelo[count] = candySeleccionado;
 						 	candyTutifruti--;
-						 	//Aumenta el contador en 1.
-						 	i++;
-						 }
+						 	count++;						 
+							 }
 						 break;
-			case LLAVE: if(candyLlave != 0)
-						 {
-						 	//Pone el caramelo dentro de una lista.
-						 	arregloDulces[i] = candySeleccionado;
-						 	//Resta 1 a la cantidad de cerezas.
-						 	candyLlave--;
-						 	//Aumenta el contador en 1.
-						 	i++;
-						 }
-						 break;
-		}
-	}
-
-	/*for (int j = 0; j < TotalCandy; ++j)
-	{
-		printf(" %d ", arregloDulces[j]);
-	}
-	#ifdef DEBUG
-	printf("candyCereza = %d\n", params->candyCereza);
-	printf("candyFrutilla = %d\n", params->candyFrutilla);
-	printf("candyManzana = %d\n", params->candyManzana);
-	printf("candyDurazno = %d\n", params->candyDurazno);
-	printf("candyMCereza = %d\n", params->candyMCereza);
-	printf("candyMFrutilla = %d\n", params->candyMFrutilla);
-	printf("candyMManzana = %d\n", params->candyMManzana);
-	printf("candyMDurazno = %d\n", params->candyMDurazno);
-	printf("candyCampana = %d\n", params->candyCampana);
-	printf("candyTutifruti = %d\n", params->candyTutifruti);
-	printf("Dificultad = %d\n", params->Dificultad);
-	#endif*/
-	
-	// Falta hacer funcion que seleccione un caramelo random y lo retorne
-	// descontando la cantidad ya tenida.
-
-	return arregloDulces;
-}
-
-void validarTablero(int** mTablero, int i, int j, int N, int M)
-{
-	int candy = mTablero[i][j];
-	int count = 0;
-	while (count < N-3 & count < M - 3)
-	{
-		int aux;
-		// Revisar a la derecha.
-		if(mTablero[i][j] == candy && mTablero[i][j+1] == candy && mTablero[i][j+2] == candy)
-		{
-			printf("Pos1: %d\n", mTablero[i][j]);
-			printf("Pos2: %d\n", mTablero[i][j+1]);
-			printf("Pos3: %d\n", mTablero[i][j+2]);
-			// Generar Random
-			// random numero mayor a i o j y menor que n y M
-			int x = (rand() % i);
-			int y = (rand() % j);
-			
-			// Ubicar random
-			aux = mTablero[i][j];
-			printf("CarameloX++ : %d, PosX: %d, PosY: %d\n", aux, i, j);
-			mTablero[i][j] = mTablero[x][y];
-			printf("CarameloX++ : %d, PosX: %d, PosY: %d\n", mTablero[i][j], x, y);
-			mTablero[x][y] = aux;
-		}
-		// Revisar hacia abajo
-		if(M < M-3)
-		{
-			if (mTablero[i][j] == candy && mTablero[i+1][j] == candy && mTablero[i+2][j] == candy)
-			{
-				printf("Pos1: %d\n", mTablero[i][j]);
-				printf("Pos2: %d\n", mTablero[i+1][j]);
-				printf("Pos3: %d\n", mTablero[i+2][j]);
-				// Generar Random
-				int x = rand() % N+i;
-				int y = rand() % M+j;
-				
-				// Ubicar random
-				aux = mTablero[i][j];
-				printf("CarameloY++ : %d, PosX: %d, PosY: %d\n", aux, i, j);
-				mTablero[i][j] = mTablero[x][y];
-				printf("CarameloY++ : %d, PosX: %d, PosY: %d\n", mTablero[i][j], x, y);
-				mTablero[x][y] = aux;
-			}
-		}
-		count++;
-		printf("Hola estoy en el ciclo\n");
+			case LLAVE: if(candyLlave != 0){
+						
+							listaCaramelo[count] = candySeleccionado;
+							candyLlave--;
+							count++;						
+						}
+						break;
+		}	
 	}
 	
+	return listaCaramelo;
 	
-
 }
 
 void guardarTablero(){}
@@ -499,7 +345,8 @@ void print(Board *b)
 		// Ubico numero de guias laterales.
 		if (count == 2)
 		{
-			printf("\n  %d ", cantFila);		
+			// Muestro por pantalla letras desde la A.
+			printf("\n  %c ", cantFila+65);		
 		}
 
 		// Ubico linea Horizontal de espacio con Fruta.
@@ -508,7 +355,7 @@ void print(Board *b)
 			printf("#");
 			for (int i = 0; i < Columnas; ++i)
 			{
-				printf("  %s  ", convertirFruta(b, cantFila, i));
+				printf("  %c  ", convertirFruta(b, cantFila, i));
 				printf("#");
 			}
 			count++;
@@ -548,31 +395,24 @@ int convertirFruta(Board* b, int Filas, int Columnas)
 	int candyConvertido = -1;
 	switch (b->matrizSTablero[Filas][Columnas]) 
 	{
-		case CEREZA: candyConvertido = "c";
+		// La numeracion asignada al candy, es la letra en ascii.
+		case CEREZA: candyConvertido = 99;
 					 return candyConvertido;
-		case FRUTILLA:candyConvertido = "f";
+		case FRUTILLA:candyConvertido = 102;
 					 return candyConvertido;
-		case MANZANA:candyConvertido = "m";
+		case MANZANA:candyConvertido = 109;
 					 return candyConvertido;
-		case DURAZNO:candyConvertido = "d";
+		case DURAZNO:candyConvertido = 100;
 					 return candyConvertido;
-		case UVA:candyConvertido = "u";
+		case MCEREZA:candyConvertido = 67;
 					 return candyConvertido;
-		case MCEREZA:candyConvertido = "C";
+		case MFRUTILLA:candyConvertido = 70;
 					 return candyConvertido;
-		case MFRUTILLA:candyConvertido = "F";
+		case MMANZANA:candyConvertido = 77;
 					 return candyConvertido;
-		case MMANZANA:candyConvertido = "M";
+		case TUTIFRUTI:candyConvertido = 84;
 					 return candyConvertido;
-		case MDURAZNO:candyConvertido = "D";
-					 return candyConvertido;
-		case MUVA:candyConvertido = "U";
-					 return candyConvertido;
-		case CAMPANA:candyConvertido = "B";
-					 return candyConvertido;
-		case TUTIFRUTI:candyConvertido = "T";
-					 return candyConvertido;
-		case LLAVE:candyConvertido = "L";
+		case LLAVE:candyConvertido = 76;
 					 return candyConvertido;
 	}
 	return 0;
@@ -597,13 +437,9 @@ void completarParametros(Params* nuevoParametro, int Dificultad, int N, int M)
 	int candyFrutilla = 0;
 	int candyManzana = 0;
 	int candyDurazno = 0;
-	int candyUva = 0;
 	int candyMCereza = 0;
 	int candyMFrutilla = 0;
 	int candyMManzana = 0;
-	int candyMDurazno = 0;
-	int candyMUva = 0;
-	int candyCampana = 0;
 	int candyTutifruti = 0;
 	int candyLlave = 0;
 
@@ -611,6 +447,7 @@ void completarParametros(Params* nuevoParametro, int Dificultad, int N, int M)
 	{
 		presionarBatidora = (rand() % (13));
 		switch(presionarBatidora)
+		// LIMITAR CANTIDAD DE DUREZAS....
 		{
 			case CEREZA: candyCereza += 
 						 verificarDificultad(Dificultad, CEREZA, &CanRestante);
@@ -624,9 +461,6 @@ void completarParametros(Params* nuevoParametro, int Dificultad, int N, int M)
 			case DURAZNO: candyDurazno +=
 						  verificarDificultad(Dificultad, DURAZNO, &CanRestante);
 						  break;
-			case UVA: candyUva +=
-					  verificarDificultad(Dificultad, UVA, &CanRestante);
-					  break;
 			case MCEREZA: candyMCereza +=
 						  verificarDificultad(Dificultad, MCEREZA, &CanRestante);
 						  break;
@@ -636,15 +470,6 @@ void completarParametros(Params* nuevoParametro, int Dificultad, int N, int M)
 			case MMANZANA: candyMManzana +=
 						   verificarDificultad(Dificultad, MMANZANA, &CanRestante);
 						   break;
-			case MDURAZNO: candyMDurazno +=
-						   verificarDificultad(Dificultad, MDURAZNO, &CanRestante);
-						   break;
-			case MUVA: candyMUva +=
-					   verificarDificultad(Dificultad, MUVA, &CanRestante);
-					   break;
-			case CAMPANA: candyCampana +=
-						  verificarDificultad(Dificultad, CAMPANA, &CanRestante);
-						  break;
 			case TUTIFRUTI: candyTutifruti +=
 							verificarDificultad(Dificultad, TUTIFRUTI, &CanRestante);
 							break;
@@ -659,13 +484,9 @@ void completarParametros(Params* nuevoParametro, int Dificultad, int N, int M)
 	nuevoParametro->candyFrutilla = candyFrutilla;
 	nuevoParametro->candyManzana = candyManzana;
 	nuevoParametro->candyDurazno = candyDurazno;
-	nuevoParametro->candyUva = candyUva;
 	nuevoParametro->candyMCereza = candyMCereza;
 	nuevoParametro->candyMFrutilla = candyMFrutilla;
 	nuevoParametro->candyMManzana = candyMManzana;
-	nuevoParametro->candyMDurazno = candyMDurazno;
-	nuevoParametro->candyMUva = candyMUva;
-	nuevoParametro->candyCampana = candyCampana;
 	nuevoParametro->candyTutifruti = candyTutifruti;
 	nuevoParametro->candyLlave = candyLlave;
 	nuevoParametro->Dificultad = Dificultad;
@@ -675,13 +496,9 @@ void completarParametros(Params* nuevoParametro, int Dificultad, int N, int M)
 	printf("candyFrutilla = %d\n", nuevoParametro->candyFrutilla);
 	printf("candyManzana = %d\n", nuevoParametro->candyManzana);
 	printf("candyDurazno = %d\n", nuevoParametro->candyDurazno);
-	printf("candyUva = %d\n", nuevoParametro->candyUva);
 	printf("candyMCereza = %d\n", nuevoParametro->candyMCereza);
 	printf("candyMFrutilla = %d\n", nuevoParametro->candyMFrutilla);
 	printf("candyMManzana = %d\n", nuevoParametro->candyMManzana);
-	printf("candyMDurazno = %d\n", nuevoParametro->candyMDurazno);
-	printf("candyMUva = %d\n", nuevoParametro->candyMUva);
-	printf("candyCampana = %d\n", nuevoParametro->candyCampana);
 	printf("candyTutifruti = %d\n", nuevoParametro->candyTutifruti);
 	printf("candyLlave = %d\n", nuevoParametro->candyLlave);
 	printf("Dificultad = %d\n", nuevoParametro->Dificultad);
@@ -691,17 +508,16 @@ void completarParametros(Params* nuevoParametro, int Dificultad, int N, int M)
 int verificarDificultad(int Dificultad, int Candy, int *CanRestante)
 {
 
-	int arregloDulcesFACIL[5] = {CEREZA, FRUTILLA, MANZANA, MCEREZA, CAMPANA};
-	int arregloDulcesINTERMEDIO[9] = {CEREZA, FRUTILLA, MANZANA, DURAZNO, MCEREZA, 
-									  MFRUTILLA, MMANZANA, CAMPANA, TUTIFRUTI};
-	int arregloDulcesDIFICIL[13] = {CEREZA, FRUTILLA, MANZANA, DURAZNO, UVA,
-									MCEREZA, MFRUTILLA, MMANZANA, MDURAZNO, MUVA,
-								    CAMPANA, TUTIFRUTI, LLAVE};
+	int arregloDulcesFACIL[3] = {CEREZA, FRUTILLA, MCEREZA};
+	int arregloDulcesINTERMEDIO[6] = {CEREZA, FRUTILLA, MANZANA, MCEREZA, 
+									  MFRUTILLA, TUTIFRUTI};
+	int arregloDulcesDIFICIL[9] = {CEREZA, FRUTILLA, MANZANA, DURAZNO,
+									MCEREZA, MFRUTILLA, MMANZANA, TUTIFRUTI, LLAVE};
 	/* int lenFacil = sizeof(arregloDulcesFACIL)/sizeof(int)); Sirve para sacar
 	largo de una lista.*/
 	if (Dificultad == FACIL)
 	{
-		for (int i = 0; i < 5; ++i)
+		for (int i = 0; i < 3; ++i)
 		{
 			if(Candy == arregloDulcesFACIL[i]){
 				*CanRestante += 1;
@@ -713,7 +529,7 @@ int verificarDificultad(int Dificultad, int Candy, int *CanRestante)
 
 	if (Dificultad == INTERMEDIO)
 	{
-		for (int i = 0; i < 9; ++i)
+		for (int i = 0; i < 6; ++i)
 		{
 			if(Candy == arregloDulcesINTERMEDIO[i]){
 				*CanRestante += 1;
@@ -725,7 +541,7 @@ int verificarDificultad(int Dificultad, int Candy, int *CanRestante)
 
 	if (Dificultad == DIFICIL)
 	{
-		for (int i = 0; i < 13; ++i)
+		for (int i = 0; i < 9; ++i)
 		{
 			if(Candy == arregloDulcesDIFICIL[i]){
 				*CanRestante += 1;
