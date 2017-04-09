@@ -4,7 +4,7 @@
 
 // #define
 
-#define DEBUG
+#define DEBUG2
 #define FALSE 0
 #define TRUE 1
 #define SIN_INGRESO -1
@@ -116,8 +116,8 @@ Board* createBoard(int N, int M, Params params);
 void guardarTablero();
 void cargarTablero();
 void verificarTablero();
-void verificarCaramelos();
-void validarTablero(int** mTablero, int i, int j, int N, int M);
+Position* checkCandies(Board b);
+int validarTablero(int** mTablero, int N, int M);
 void print(Board *b);
 
 // MenuPrincipal
@@ -175,18 +175,71 @@ int** obtenerMatrizCandy(int N,int M,Params *params)
 					for (int i = 0; i < N; ++i)
 					mTablero[i] = (int *)malloc(M * sizeof(int));
 
-	int* listaCaramelo = obtenerListaCaramelo(N, M, params);
-
-	int seleccionador = 0;
-	for (int i = 0; i < N; i++)
+	// Mientras validar tablero sea falso, regeneramos el tablero.
+	int* listaCaramelo;
+	int seleccionador;
+	int i;
+	int j;
+	int validar = FALSE;
+	while(validar != TRUE)
 	{
-		for (int j = 0; j < M; j++)
+
+		listaCaramelo = obtenerListaCaramelo(N, M, params);
+
+		seleccionador = 0;
+		for (i = 0; i < N; i++)
 		{
-			mTablero[i][j] = listaCaramelo[seleccionador];
-			seleccionador++;
+			for (j = 0; j < M; j++)
+			{
+				mTablero[i][j] = listaCaramelo[seleccionador];
+				seleccionador++;
+			}
+		}
+		validar = validarTablero(mTablero, N, M);
+	}
+
+ 
+	//while
+	// mientras checkcandy encuentra tres en linea, crea denuevo
+	// El tablero..
+
+	return mTablero;
+}
+
+int validarTablero(int** mTablero, int N, int M)
+{
+
+	int dulce;
+	int i;
+	int j;
+
+	// Revisar Filas
+	for (i = 0; i < N; i++)
+	{
+		for (j = 0; j < M-2; j++)
+		{
+			dulce = mTablero[i][j];
+			if (mTablero[i][j] == dulce && mTablero[i][j+1] == dulce 
+				&& mTablero[i][j+2] == dulce)
+			{
+				return FALSE; // Si el mapa no es valido
+			}
 		}
 	}
-	return mTablero;
+	// Revisar Columnas
+	for (j = 0; j < M; j++)
+	{
+		for (i = 0; i < N-2; i++)
+		{
+			dulce = mTablero[i][j];
+			if (mTablero[i][j] == dulce && mTablero[i+1][j] == dulce 
+				&& mTablero[i+2][j] == dulce)
+			{
+				return FALSE; // Si el mapa no es valido
+			}
+		}
+	}
+	return TRUE; // Si el mapa esta validado
 }
 
 int* obtenerListaCaramelo(int N,int M,Params *params)
@@ -211,14 +264,12 @@ int* obtenerListaCaramelo(int N,int M,Params *params)
 		candySeleccionado = (rand() % 9);
 		switch (candySeleccionado)
 		{
-			case CEREZA:
-
-			if (candyCereza != 0)
-			{ 
-				listaCaramelo[count] = candySeleccionado;
-				candyCereza--;
-				count++;		
-			}
+			case CEREZA:if (candyCereza != 0)
+						{ 
+							listaCaramelo[count] = candySeleccionado;
+							candyCereza--;
+							count++;		
+						}
 			
 			break;
 				
@@ -282,14 +333,16 @@ int* obtenerListaCaramelo(int N,int M,Params *params)
 		}	
 	}
 	
-	return listaCaramelo;
-	
+	return listaCaramelo;	
 }
 
 void guardarTablero(){}
 void cargarTablero(){}
 void verificarTablero(){}
-void verificarCaramelos(){}
+Position* checkCandies(Board b)
+{
+
+}
 void print(Board *b)
 {
 	int Filas = b->Filas;
@@ -445,9 +498,8 @@ void completarParametros(Params* nuevoParametro, int Dificultad, int N, int M)
 
 	while (CanRestante < TotalCandy)
 	{
-		presionarBatidora = (rand() % (13));
+		presionarBatidora = (rand() % (9));
 		switch(presionarBatidora)
-		// LIMITAR CANTIDAD DE DUREZAS....
 		{
 			case CEREZA: candyCereza += 
 						 verificarDificultad(Dificultad, CEREZA, &CanRestante);
@@ -461,15 +513,25 @@ void completarParametros(Params* nuevoParametro, int Dificultad, int N, int M)
 			case DURAZNO: candyDurazno +=
 						  verificarDificultad(Dificultad, DURAZNO, &CanRestante);
 						  break;
-			case MCEREZA: candyMCereza +=
-						  verificarDificultad(Dificultad, MCEREZA, &CanRestante);
+			// Se restringe la cantidad de dulces mejorados.
+			case MCEREZA: if (candyMCereza < 10)
+						  {
+						  	candyMCereza +=
+						  	verificarDificultad(Dificultad, MCEREZA, &CanRestante);
+						  }
 						  break;
-			case MFRUTILLA: candyMFrutilla += 
-							verificarDificultad(Dificultad, MFRUTILLA, &CanRestante);
+			case MFRUTILLA: if (candyMFrutilla < 20)
+							{
+								candyMFrutilla += 
+								verificarDificultad(Dificultad, MFRUTILLA, &CanRestante);
+							}
 						    break;
-			case MMANZANA: candyMManzana +=
-						   verificarDificultad(Dificultad, MMANZANA, &CanRestante);
-						   break;
+			case MMANZANA:  if (candyMManzana < 30)
+							{
+								candyMManzana +=
+						   		verificarDificultad(Dificultad, MMANZANA, &CanRestante);
+							} 
+						    break;
 			case TUTIFRUTI: candyTutifruti +=
 							verificarDificultad(Dificultad, TUTIFRUTI, &CanRestante);
 							break;
@@ -513,8 +575,7 @@ int verificarDificultad(int Dificultad, int Candy, int *CanRestante)
 									  MFRUTILLA, TUTIFRUTI};
 	int arregloDulcesDIFICIL[9] = {CEREZA, FRUTILLA, MANZANA, DURAZNO,
 									MCEREZA, MFRUTILLA, MMANZANA, TUTIFRUTI, LLAVE};
-	/* int lenFacil = sizeof(arregloDulcesFACIL)/sizeof(int)); Sirve para sacar
-	largo de una lista.*/
+
 	if (Dificultad == FACIL)
 	{
 		for (int i = 0; i < 3; ++i)
@@ -551,6 +612,7 @@ int verificarDificultad(int Dificultad, int Candy, int *CanRestante)
 		return 0;
 	}
 }
+
 
 void jugar()
 {
@@ -638,7 +700,7 @@ void menuJugarModoPrueba()
 						  	 break;
 		case VERIFICAR_TABLERO: verificarTablero();
 						  		break;
-		case VERIFICAR_CARAMELOS: verificarCaramelos();
+		case VERIFICAR_CARAMELOS: //checkCandies(Board b);
 						  		  break;
 		case MOSTRAR_TABLERO: //print(b);
 							  break;
@@ -655,8 +717,8 @@ void menuCrearTablero()
 
 	switch (opcionIngresada)
 	{
-		case FACIL: nuevoParametro = crearParametrosTablero(FACIL, 4, 4);
-					nuevoTablero = createBoard(4, 4, *nuevoParametro);
+		case FACIL: nuevoParametro = crearParametrosTablero(FACIL, 5, 5);
+					nuevoTablero = createBoard(5, 5, *nuevoParametro);
 					print(nuevoTablero);
 					seleccionMenu(MENU_JUGAR_MODO_PRUEBA);
 					break;
@@ -665,8 +727,8 @@ void menuCrearTablero()
 						 print(nuevoTablero);
 						 seleccionMenu(MENU_JUGAR_MODO_PRUEBA);
 						 break;
-		case DIFICIL: nuevoParametro = crearParametrosTablero(DIFICIL, 10, 15);
-					  nuevoTablero = createBoard(10, 15, *nuevoParametro);
+		case DIFICIL: nuevoParametro = crearParametrosTablero(DIFICIL, 10, 10);
+					  nuevoTablero = createBoard(10, 10, *nuevoParametro);
 					  print(nuevoTablero);
 					  seleccionMenu(MENU_JUGAR_MODO_PRUEBA);
 					  break;
