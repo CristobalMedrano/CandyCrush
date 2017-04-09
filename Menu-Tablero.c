@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h> 
 
 // #define
@@ -58,6 +59,7 @@ typedef struct Tablero
 	int Filas;
 	int Columnas;
 	int **matrizSTablero;
+	int tableroGuardado;
 } Board ;
 
 typedef struct Juego
@@ -113,7 +115,7 @@ int convertirFruta(Board* b, int Filas, int Columnas);
 // MenuJugarModoPrueba
 void jugarMover();
 Board* createBoard(int N, int M, Params params);
-void guardarTablero();
+void saveBoard(Board* b, int* id);
 void cargarTablero();
 void verificarTablero();
 Position* checkCandies(Board b);
@@ -122,6 +124,9 @@ void print(Board *b);
 
 // MenuPrincipal
 void jugar();
+char* obtenerFecha(int *id);
+char* nombreArchivo(int *id);
+int obtenerID();
 
 // Verificacion - Validacion
 int obtenerOpcionIngresada(int valMin, int valMax, int tipoMenu);
@@ -336,7 +341,75 @@ int* obtenerListaCaramelo(int N,int M,Params *params)
 	return listaCaramelo;	
 }
 
-void guardarTablero(){}
+void saveBoard(Board* b, int* id)
+{
+	// Obtenemos la ID del tablero a guardar.
+	*id = obtenerID();
+
+	// Guardamos la id.
+	b->tableroGuardado = *id;
+	
+	// generamos el nombre del archivo.
+	char* saveID = nombreArchivo(id);
+
+	//Obtenemos el puntero del archivo a leer.
+	FILE *archivoSalida;
+	archivoSalida = fopen(saveID, "w");
+    
+    if(archivoSalida == NULL)
+    {
+        printf("Error al abrir archivo\n");
+    }
+    int i;
+	int j;
+
+	// Escribimos cada posicicion de la matriz en el archivo.
+	for (i = 0; i < b->Filas; i++)
+	{
+		for (j = 0; j < b->Columnas; j++)
+		{
+			fprintf(archivoSalida, "%d", b->matrizSTablero[i][j]);
+		}
+		fprintf(archivoSalida,"\n");
+	}
+	//Escribimos la hora.
+	char* hora = obtenerFecha(id);
+	fprintf(archivoSalida, "%s\n", hora);
+
+
+    fclose(archivoSalida);
+
+}
+char* nombreArchivo(int *id)
+{
+	// Convertimos la id en string.
+	char strID[10];
+	sprintf(strID, "%d", *id);
+
+	// Concatenamos el nombre del archivo.
+	static char saveID[20] = "";
+	strcat(saveID, "save_");
+	strcat(saveID, strID);
+	strcat(saveID, ".sb");
+	return saveID;
+}
+
+char* obtenerFecha(int *id)
+{
+	time_t tiempo = *id;
+    struct tm *tlocal = localtime(&tiempo);
+    static char hora[128];
+    strftime(hora, 128, "Fecha: %d/%m/%y Hora: %H:%M:%S", tlocal);
+    return hora;
+}
+
+int obtenerID()
+{
+	int id = (int)time(NULL);
+    return id;
+}
+
+
 void cargarTablero(){}
 void verificarTablero(){}
 Position* checkCandies(Board b)
@@ -484,8 +557,6 @@ void completarParametros(Params* nuevoParametro, int Dificultad, int N, int M)
 	int TotalCandy = (N*M);
 	int presionarBatidora = 0;
 	int CanRestante = 0;
-	srand(time(NULL));
-
 	int candyCereza = 0;
 	int candyFrutilla = 0;
 	int candyManzana = 0;
@@ -651,6 +722,7 @@ int obtenerOpcionIngresada(int valMin, int valMax, int tipoMenu)
 
 void seleccionMenu(int tipoMenu)
 {
+	// Muestra el menu y retorna esa opcion, asi podemos controlar mejor los datos generales
 	switch (tipoMenu)
 	{
 		case MENU_PRINCIPAL: mostrarMenu(MENU_PRINCIPAL);
@@ -694,13 +766,13 @@ void menuJugarModoPrueba()
 						  break;
 		case CREAR_TABLERO: seleccionMenu(MENU_CREAR_TABLERO);
 						  	break;
-		case GUARDAR_TABLERO: guardarTablero();
+		case GUARDAR_TABLERO: //saveBoard(b, &id);
 						  	  break;
 		case CARGAR_TABLERO: cargarTablero();
 						  	 break;
 		case VERIFICAR_TABLERO: verificarTablero();
 						  		break;
-		case VERIFICAR_CARAMELOS: //checkCandies(Board b);
+		case VERIFICAR_CARAMELOS: //checkCandies(b);
 						  		  break;
 		case MOSTRAR_TABLERO: //print(b);
 							  break;
@@ -720,6 +792,9 @@ void menuCrearTablero()
 		case FACIL: nuevoParametro = crearParametrosTablero(FACIL, 5, 5);
 					nuevoTablero = createBoard(5, 5, *nuevoParametro);
 					print(nuevoTablero);
+					int id;
+					saveBoard(nuevoTablero, &id);
+					printf("Soy la id del menu: %d\n", id);
 					seleccionMenu(MENU_JUGAR_MODO_PRUEBA);
 					break;
 		case INTERMEDIO: nuevoParametro = crearParametrosTablero(INTERMEDIO, 7, 7);
@@ -810,6 +885,8 @@ void mostrarMenuSalir()
 
 int main(int argc, char const *argv[])
 {
+	srand(time(NULL));
+
 	seleccionMenu(MENU_PRINCIPAL);
 	return 0;
 }
