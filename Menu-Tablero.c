@@ -59,7 +59,8 @@ typedef struct Tablero
 	int Filas;
 	int Columnas;
 	int **matrizSTablero;
-	int tableroGuardado;
+	int idGuardado;
+	int Dificultad;
 } Board ;
 
 typedef struct Juego
@@ -116,8 +117,7 @@ int convertirFruta(Board* b, int Filas, int Columnas);
 void jugarMover();
 Board* createBoard(int N, int M, Params params);
 void saveBoard(Board* b, int* id);
-void cargarTablero();
-void verificarTablero();
+Board* loadBoard(int id);
 Position* checkCandies(Board b);
 int validarTablero(int** mTablero, int N, int M);
 void print(Board *b);
@@ -125,7 +125,7 @@ void print(Board *b);
 // MenuPrincipal
 void jugar();
 char* obtenerFecha(int *id);
-char* nombreArchivo(int *id);
+char* obtenerNombre(int *id);
 int obtenerID();
 
 // Verificacion - Validacion
@@ -143,6 +143,11 @@ void mostrarMenuPrincipal();
 void mostrarMenuJugarModoPrueba();
 void mostrarMenuCrearTablero();
 void mostrarMenuSalir();
+
+int verificarFilasColumnas(int dificultad, int N, int M);
+int verificarDulces(int** Tablero, int dificultad, int N, int M);
+
+
 
 
 
@@ -169,6 +174,8 @@ Board* createBoard(int N, int M, Params params)
 	nuevoTablero->Filas = N;
 	// Guardamos la cantidad de columnas.
 	nuevoTablero->Columnas = M;
+	// Guardamos la dificultad.
+	nuevoTablero->Dificultad = params.Dificultad;
 	print(nuevoTablero);
 
 	return nuevoTablero;
@@ -347,10 +354,10 @@ void saveBoard(Board* b, int* id)
 	*id = obtenerID();
 
 	// Guardamos la id.
-	b->tableroGuardado = *id;
+	b->idGuardado = *id;
 	
 	// generamos el nombre del archivo.
-	char* saveID = nombreArchivo(id);
+	char* saveID = obtenerNombre(id);
 
 	//Obtenemos el puntero del archivo a leer.
 	FILE *archivoSalida;
@@ -360,6 +367,12 @@ void saveBoard(Board* b, int* id)
     {
         printf("Error al abrir archivo\n");
     }
+
+    fprintf(archivoSalida, "%d", b->Dificultad);
+    fprintf(archivoSalida, " ");
+    fprintf(archivoSalida, "%d", b->Filas);
+    fprintf(archivoSalida, " ");
+    fprintf(archivoSalida, "%d ", b->Columnas);
     int i;
 	int j;
 
@@ -368,26 +381,26 @@ void saveBoard(Board* b, int* id)
 	{
 		for (j = 0; j < b->Columnas; j++)
 		{
-			fprintf(archivoSalida, "%d", b->matrizSTablero[i][j]);
+			fprintf(archivoSalida, "%d ", b->matrizSTablero[i][j]);
 		}
-		fprintf(archivoSalida,"\n");
+		//fprintf(archivoSalida,"\n");
 	}
+
 	//Escribimos la hora.
 	char* hora = obtenerFecha(id);
-	fprintf(archivoSalida, "%s\n", hora);
-
-
+	fprintf(archivoSalida, "\n%s", hora);
     fclose(archivoSalida);
-
 }
-char* nombreArchivo(int *id)
+
+char* obtenerNombre(int *id)
 {
+	static char saveID[20];
 	// Convertimos la id en string.
 	char strID[10];
 	sprintf(strID, "%d", *id);
 
 	// Concatenamos el nombre del archivo.
-	static char saveID[20] = "";
+	saveID[0] = '\0';
 	strcat(saveID, "save_");
 	strcat(saveID, strID);
 	strcat(saveID, ".sb");
@@ -396,9 +409,10 @@ char* nombreArchivo(int *id)
 
 char* obtenerFecha(int *id)
 {
+	static char hora[128];
 	time_t tiempo = *id;
     struct tm *tlocal = localtime(&tiempo);
-    static char hora[128];
+    hora[0] = '\0';
     strftime(hora, 128, "Fecha: %d/%m/%y Hora: %H:%M:%S", tlocal);
     return hora;
 }
@@ -410,8 +424,140 @@ int obtenerID()
 }
 
 
-void cargarTablero(){}
-void verificarTablero(){}
+Board* loadBoard(int id)
+{
+	int N = 0;
+	int M = 0;
+	int dificultad;
+	Board* cargarTablero;
+	int **mTablero;
+
+	FILE *archivoEntrada;
+	// Convertimos id en un texto a leer.
+	char* loadID = obtenerNombre(&id);
+
+	archivoEntrada = fopen(loadID, "r");
+	if(archivoEntrada == NULL)
+    {
+        printf("Archivo no encontrado.");
+    }
+    fscanf(archivoEntrada,"%d",&dificultad);
+	fscanf(archivoEntrada,"%d",&N);
+	fscanf(archivoEntrada,"%d",&M);
+
+	int i;
+	int j;
+	int valor = 0;
+
+	mTablero =	(int **)malloc(N * sizeof(int *));
+				for (int i = 0; i < N; ++i)
+				mTablero[i] = (int *)malloc(M * sizeof(int));
+	i = 0;
+	while (i < N)
+	{
+		j = 0;
+		while (j < M)
+		{
+			fscanf(archivoEntrada, "%d", &valor);
+			mTablero[i][j] = valor;
+			j++;	
+		}
+		i++;
+	}
+
+	fclose(archivoEntrada);
+
+	cargarTablero = (Board*)malloc(sizeof(Board));
+	// Guardamos el tablero temporal.
+	cargarTablero->matrizSTablero = mTablero;
+	// Guardamos la cantidad de filas.
+	cargarTablero->Filas = N;
+	// Guardamos la cantidad de columnas.
+	cargarTablero->Columnas = M;
+	cargarTablero->idGuardado = id;
+	cargarTablero->Dificultad = dificultad;
+
+	printf("Archivo leido Correctamente.\n");
+	return cargarTablero;
+}
+
+int checkBoard(Board* b)
+{
+	int** Tablero = b->matrizSTablero;
+	int N = b->Filas;
+	int M = b->Columnas;
+	int id = b->idGuardado;
+	int dificultad = b->Dificultad;
+	//Verificamos la dificultad, cantidad de filas y dulces.
+	int i;
+	int j;
+	int Candy;
+	int CanRestante = (N*M);
+
+	// Primero verificamos la cantidad de filas y colummnas.
+	int ver1 = verificarFilasColumnas(dificultad, N, M);
+
+	// Segundo verificamos si los dulces son correctos y acordes
+	// al nivel.
+	int ver2 = verificarDulces(Tablero, dificultad, N, M);
+
+	printf("ver1 :%d\n", ver1);
+	printf("ver2 :%d\n", ver2);
+	// Si las 3 verificaciones son verdaderas, entonces el tablero
+	// es valido. De modo contrario es Falso e invalido.
+	if (ver1 == TRUE && ver2 == TRUE)
+	{
+		return TRUE;
+	} else
+	{
+		return FALSE;
+	}
+}
+
+int verificarFilasColumnas(int dificultad, int N, int M)
+{
+	switch (dificultad) 
+	{
+		case FACIL: if(N == 5 && M == 5)
+					{
+						return TRUE;
+					}
+					return FALSE;
+
+		case INTERMEDIO: if(N == 7 && M == 7)
+					{
+						return TRUE;
+					}
+					return FALSE;
+		case DIFICIL:if(N == 10 && M == 10)
+					{
+						return TRUE;
+					}
+					return FALSE;
+		default: return FALSE;
+	}
+}
+
+int verificarDulces(int** Tablero, int dificultad, int N, int M)
+{
+	int Candy;
+	int CanRestante = (N*M);
+	int i;
+	int j;
+	for (i = 0; i < N; i++)
+	{
+		for (j = 0; j < M; j++)
+		{
+			Candy = Tablero[i][j];
+			if(verificarDificultad(dificultad, Candy, &CanRestante) != 1)
+			{
+				return FALSE;
+			}
+		}
+	}
+	return TRUE;
+}
+
 Position* checkCandies(Board b)
 {
 
@@ -768,9 +914,9 @@ void menuJugarModoPrueba()
 						  	break;
 		case GUARDAR_TABLERO: //saveBoard(b, &id);
 						  	  break;
-		case CARGAR_TABLERO: cargarTablero();
+		case CARGAR_TABLERO: //loardBoard(id);
 						  	 break;
-		case VERIFICAR_TABLERO: verificarTablero();
+		case VERIFICAR_TABLERO: //checkBoard(b);
 						  		break;
 		case VERIFICAR_CARAMELOS: //checkCandies(b);
 						  		  break;
@@ -795,6 +941,12 @@ void menuCrearTablero()
 					int id;
 					saveBoard(nuevoTablero, &id);
 					printf("Soy la id del menu: %d\n", id);
+					nuevoTablero = loadBoard(1491783159);
+					int error = checkBoard(nuevoTablero);
+					if(error == 1)printf("True\n");
+					if(error == 0)printf("False\n");
+					print(nuevoTablero);
+					
 					seleccionMenu(MENU_JUGAR_MODO_PRUEBA);
 					break;
 		case INTERMEDIO: nuevoParametro = crearParametrosTablero(INTERMEDIO, 7, 7);
@@ -845,7 +997,7 @@ void mostrarMenuPrincipal()
 {
 	printf("\n##############################\n");
 	printf("#        Candy Crush         #\n");
-	printf("#            V.06            #\n");
+	printf("#            V.13            #\n");
 	printf("# Paradigmas de Programacion #\n");
 	printf("##############################\n\n");
 	printf("Menu del juego, ingrese numero de opcion deseada: \n");
