@@ -92,9 +92,7 @@ typedef struct Dulce
 
 typedef struct Posicion
 {
-	int posX;
-	int posY;
-	Candy candy;
+	int* exDulces;
 
 } Position ;
 
@@ -118,7 +116,7 @@ void jugarMover();
 Board* createBoard(int N, int M, Params params);
 void saveBoard(Board* b, int* id);
 Board* loadBoard(int id);
-Position* checkCandies(Board b);
+Position* checkCandies(Board* b);
 int validarTablero(int** mTablero, int N, int M);
 void print(Board *b);
 
@@ -448,6 +446,8 @@ Board* loadBoard(int id)
 	int i;
 	int j;
 	int valor = 0;
+	char inicio;
+	char final;
 
 	mTablero =	(int **)malloc(N * sizeof(int *));
 				for (int i = 0; i < N; ++i)
@@ -457,13 +457,14 @@ Board* loadBoard(int id)
 	{
 		j = 0;
 		while (j < M)
-		{
+		{	
 			fscanf(archivoEntrada, "%d", &valor);
 			mTablero[i][j] = valor;
-			j++;	
+			j++;
 		}
 		i++;
 	}
+
 
 	fclose(archivoEntrada);
 
@@ -500,6 +501,8 @@ int checkBoard(Board* b)
 	// Segundo verificamos si los dulces son correctos y acordes
 	// al nivel.
 	int ver2 = verificarDulces(Tablero, dificultad, N, M);
+
+	// Tercera verficiamos si contador es mayor o igual a 6.
 
 	printf("ver1 :%d\n", ver1);
 	printf("ver2 :%d\n", ver2);
@@ -558,9 +561,82 @@ int verificarDulces(int** Tablero, int dificultad, int N, int M)
 	return TRUE;
 }
 
-Position* checkCandies(Board b)
+Position* checkCandies(Board* b)
 {
-
+	printf("Hola\n");
+	Position* checkCandy = (Position*)malloc(sizeof(Position));
+	int* exDulces = (int*)malloc(sizeof(int)*10);
+	int N = b->Filas;
+	int M = b->Columnas;
+	int i;
+	int j;
+	int k = 0;
+	int dulce;
+	int** mTablero = b->matrizSTablero;
+	// Revisamos Filas.
+	for (i = 0; i < N; i++)
+	{
+		for (j = 0; j < M-2; j++)
+		{	
+			dulce = mTablero[i][j];
+			// Desde el punto hasta j<M-2
+			if(j < (M-2) && mTablero[i][j] == dulce && mTablero[i][j+1] == dulce
+				&& mTablero[i][j+2])
+			{
+				k = 0;
+				// En caso de necesitar el dulce, meterlo al final.
+				while(mTablero[i][j+k] == dulce)
+				{
+					if (k % 2 == 0)
+					{
+						exDulces[k] = i;
+						k++;
+					} else 
+					{
+						exDulces[k] = (j+k);
+						k++;
+					}
+					
+				}
+				checkCandy->exDulces = exDulces;
+				return checkCandy;
+			}			
+		}
+	}
+	// Revisar colummna;
+	for (j = 0; j < M; j++)
+	{
+		for (i = 0; i < N-2; i++)
+		{	
+			dulce = mTablero[i][j];
+			// Desde el punto hasta i<N-2
+			if(i < (N-2) && mTablero[i][j] == dulce && mTablero[i+1][j] == dulce
+				&& mTablero[i+2][j])
+			{
+				k = 0;
+				while(mTablero[i+k][j] == dulce)
+				{
+					if (k % 2 == 0)
+					{
+						exDulces[k] = (i+k);
+						k++;
+					} else 
+					{
+						exDulces[k] = j;
+						k++;
+					}
+					
+				}
+				checkCandy->exDulces = exDulces;
+				return checkCandy;
+			}			
+		}
+	}
+	// Retorno falso porque no encontre lista.
+	printf("Hola soy falso\n");
+	exDulces[0] = -1;
+	checkCandy->exDulces = exDulces;
+	return checkCandy;
 }
 void print(Board *b)
 {
@@ -931,32 +1007,37 @@ void menuCrearTablero()
 {
 	int opcionIngresada = obtenerOpcionIngresada(0, 3, MENU_CREAR_TABLERO);
 	Params* nuevoParametro;
-	Board* nuevoTablero;
+	Board* Tablero;
 
 	switch (opcionIngresada)
 	{
 		case FACIL: nuevoParametro = crearParametrosTablero(FACIL, 5, 5);
-					nuevoTablero = createBoard(5, 5, *nuevoParametro);
-					print(nuevoTablero);
-					int id;
-					saveBoard(nuevoTablero, &id);
-					printf("Soy la id del menu: %d\n", id);
-					nuevoTablero = loadBoard(1491783159);
-					int error = checkBoard(nuevoTablero);
-					if(error == 1)printf("True\n");
-					if(error == 0)printf("False\n");
-					print(nuevoTablero);
+					Tablero = createBoard(5, 5, *nuevoParametro);
+					print(Tablero);
+					//int id;
+					//saveBoard(Tablero, &id);
+					//printf("Soy la id del menu: %d\n", id);
+					//Tablero = loadBoard(1491795455);
+					//int error = checkBoard(Tablero);
+					//if(error == 1)printf("True\n");
+					//if(error == 0)printf("False\n");
+					//print(Tablero);
+					int* hola = checkCandies(Tablero);
+					for (int i = 0; i < (sizeof(hola)/sizeof(int)); ++i)
+					{
+						hola[i];
+					}
 					
 					seleccionMenu(MENU_JUGAR_MODO_PRUEBA);
 					break;
 		case INTERMEDIO: nuevoParametro = crearParametrosTablero(INTERMEDIO, 7, 7);
-						 nuevoTablero = createBoard(7, 7, *nuevoParametro);
-						 print(nuevoTablero);
+						 Tablero = createBoard(7, 7, *nuevoParametro);
+						 print(Tablero);
 						 seleccionMenu(MENU_JUGAR_MODO_PRUEBA);
 						 break;
 		case DIFICIL: nuevoParametro = crearParametrosTablero(DIFICIL, 10, 10);
-					  nuevoTablero = createBoard(10, 10, *nuevoParametro);
-					  print(nuevoTablero);
+					  Tablero = createBoard(10, 10, *nuevoParametro);
+					  print(Tablero);
 					  seleccionMenu(MENU_JUGAR_MODO_PRUEBA);
 					  break;
 		case VOLVER_MENU_JUGAR_MODO_PRUEBA: seleccionMenu(MENU_JUGAR_MODO_PRUEBA);
