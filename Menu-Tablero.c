@@ -93,6 +93,8 @@ typedef struct Dulce
 typedef struct Posicion
 {
 	int* exDulces;
+	int Eliminados;
+	int Dulce;
 
 } Position ;
 
@@ -144,7 +146,9 @@ void mostrarMenuSalir();
 
 int verificarFilasColumnas(int dificultad, int N, int M);
 int verificarDulces(int** Tablero, int dificultad, int N, int M);
-
+int* listaDeDulcesEliminar(int i, int j, int k, int N, int M, int** mTablero);
+int* revisarDulcesFila(int N, int M, int* exDulces, int** mTablero, Position* checkCandy);
+int* revisarDulcesColumna(int N, int M, int* exDulces, int** mTablero, Position* checkCandy);
 
 
 
@@ -563,77 +567,156 @@ int verificarDulces(int** Tablero, int dificultad, int N, int M)
 
 Position* checkCandies(Board* b)
 {
-	printf("Hola\n");
-	int k;
 	Position* checkCandy = (Position*)malloc(sizeof(Position));
 	int* exDulces;
 	int N = b->Filas;
 	int M = b->Columnas;
+	int** mTablero = b->matrizSTablero;
+	
+	// Revisamos Filas.
+	exDulces = revisarDulcesFila(N, M, exDulces, mTablero, checkCandy);
+	if(exDulces != 0)
+	{
+		checkCandy->exDulces = exDulces;
+		return checkCandy;
+	}
+	// Revisamos Columnas.
+	printf("revisare columnas\n");
+	exDulces = revisarDulcesColumna(N, M, exDulces, mTablero, checkCandy);
+	printf("revise columnas\n");
+	if(exDulces != 0)
+	{
+		checkCandy->exDulces = exDulces;
+		return checkCandy;
+	}
+	// No encontramos dulces.
+	return checkCandy;
+}
+
+int* revisarDulcesFila(int N, int M, int* exDulces, int** mTablero, Position* checkCandy)
+{
 	int i;
 	int j;
 	int dulce;
-	int** mTablero = b->matrizSTablero;
-	// Revisamos Filas.
+	int contador = 0;
 	for (i = 0; i < N; i++)
 	{
-		for (j = 0; j < M-2; j++)
-		{	
+		for (j = 0; j < M; j++)
+		{
 			dulce = mTablero[i][j];
-			// Desde el punto hasta j<M-2
-			if(j < (M-2) && mTablero[i][j+1] == dulce
-				&& mTablero[i][j+2] == dulce)
+			int k = i;
+			int l = j;
+			contador = 0;
+			while (k < N)
 			{
-				printf("%d\n", mTablero[i][j]);
-				printf("%d\n", mTablero[i][j+1]);
-				printf("%d\n", mTablero[i][j+2]);
-				printf("Condicion?\n");
-				k = 0;
-				// En caso de necesitar el dulce, meterlo al final.
-				while(mTablero[i][j+k] == dulce)
+				while (l < M)
 				{
-					exDulces[k] = i;
-					exDulces[k+1] = (j+k+1);
-					k++;	
+					if(mTablero[k][l] == dulce)
+					{
+						contador++;
+					}
+					else
+					{
+						k = N;
+						l = M;
+					}
+					l++;
 				}
-				checkCandy->exDulces = exDulces;
-				return checkCandy;
-			}			
+				k++;
+			}
+			if (contador >= 3)
+			{
+				exDulces = (int*)malloc(sizeof(int)*(contador*2));
+				checkCandy->Dulce = dulce;
+				checkCandy->exDulces = (contador*2);
+				int pos = 0;
+				int incremento = 0;
+				while (contador >= 0)
+				{
+					// def x
+					exDulces[pos] = i;
+					pos++;
+					// def y
+					exDulces[pos] = (j+incremento);
+					contador--;
+					pos++;
+					incremento++;
+				}
+				#ifdef DEBUG
+				for (int o = 0; o < checkCandy->exDulces; ++o)
+				{
+					printf("-> %d\n", exDulces[o]);
+				}
+				#endif
+				return exDulces;
+			}
 		}
 	}
-	// Revisar colummna;
-	printf("for 2\n");
+	return FALSE; 
+}
+
+int* revisarDulcesColumna(int N, int M, int* exDulces, int** mTablero, Position* checkCandy)
+{
+	int i;
+	int j;
+	int dulce;
+	int contador = 0;
 	for (j = 0; j < M; j++)
 	{
-		for (i = 0; i < N-2; i++)
-		{	
+		for (i = 0; i < N; i++)
+		{
 			dulce = mTablero[i][j];
-			// Desde el punto hasta i<N-2
-			if(i < (N-2) && mTablero[i+1][j] == dulce
-				&& mTablero[i+2][j] == dulce)
+			int k = i;
+			int l = j;
+			contador = 0;
+			while (l < M)
 			{
-				k = 0;
-				while(mTablero[i+k][j] == dulce)
+				while (k < N)
 				{
-					exDulces = (int*)malloc(sizeof(int)*(k+1));
-					printf("soy k%d\n", k);
-					exDulces[k] = (i+k);
+					if(mTablero[k][l] == dulce)
+					{
+						contador++;
+					}
+					else
+					{
+						k = N;
+						l = M;
+					}
 					k++;
-					exDulces[k] = j;
-					k++;		
 				}
-				// Agregar un contador para luego asignar memoria y repartir los dulces.
-				// crear una funcion que haga esto, retorna la lista y cantidad.
-				checkCandy->exDulces = exDulces;
-				return checkCandy;
-			}			
+				l++;
+			}
+			if (contador >= 3)
+			{
+				exDulces = (int*)malloc(sizeof(int)*(contador*2));
+				checkCandy->Dulce = dulce;
+				checkCandy->exDulces = (contador*2);
+				int pos = 0;
+				int incremento = 0;
+				while (contador >= 0)
+				{
+					// def x
+					exDulces[pos] = i+incremento;
+					pos++;
+					// def y
+					exDulces[pos] = j;
+					contador--;
+					pos++;
+					incremento++;
+				}
+				#ifdef DEBUG
+				for (int o = 0; o < checkCandy->exDulces; ++o)
+				{
+					printf("-> %d\n", exDulces[o]);
+				}
+				#endif
+				return exDulces;
+			}
 		}
 	}
-	// Retorno falso porque no encontre lista.
-	printf("Hola soy falso\n");
-	exDulces[0] = -1;
-	checkCandy->exDulces = exDulces;
-	return checkCandy;
+	return FALSE; 
 }
+
 void print(Board *b)
 {
 	int Filas = b->Filas;
@@ -949,9 +1032,6 @@ void seleccionMenu(int tipoMenu)
 		case MENU_JUGAR_MODO_PRUEBA: mostrarMenu(MENU_JUGAR_MODO_PRUEBA); 
 									 menuJugarModoPrueba();
 									 break;
-		case MENU_CREAR_TABLERO: mostrarMenuCrearTablero(MENU_CREAR_TABLERO);
-								 menuCrearTablero();
-								 break;
 		case MENU_SALIR: mostrarMenu(MENU_SALIR);
 						 menuSalir();
 				 		 break;
@@ -977,12 +1057,16 @@ void menuPrincipal()
 void menuJugarModoPrueba()
 {
 	int opcionIngresada = obtenerOpcionIngresada(0, 7, MENU_JUGAR_MODO_PRUEBA);
+	Params* Parametros;
+	Board* Tablero;
+	Position* checkCandy;
 
 	switch (opcionIngresada)
 	{
-		case JUGAR_MOVER: jugarMover();
+		case JUGAR_MOVER: //jugarMover();
 						  break;
-		case CREAR_TABLERO: seleccionMenu(MENU_CREAR_TABLERO);
+		case CREAR_TABLERO: mostrarMenuCrearTablero(MENU_CREAR_TABLERO);
+							menuCrearTablero();
 						  	break;
 		case GUARDAR_TABLERO: //saveBoard(b, &id);
 						  	  break;
@@ -1002,9 +1086,7 @@ void menuJugarModoPrueba()
 void menuCrearTablero()
 {
 	int opcionIngresada = obtenerOpcionIngresada(0, 3, MENU_CREAR_TABLERO);
-	Params* nuevoParametro;
-	Board* Tablero;
-	Position* pos;
+	
 
 	switch (opcionIngresada)
 	{
