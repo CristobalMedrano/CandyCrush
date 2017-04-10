@@ -564,13 +564,13 @@ int verificarDulces(int** Tablero, int dificultad, int N, int M)
 Position* checkCandies(Board* b)
 {
 	printf("Hola\n");
+	int k;
 	Position* checkCandy = (Position*)malloc(sizeof(Position));
-	int* exDulces = (int*)malloc(sizeof(int)*10);
+	int* exDulces;
 	int N = b->Filas;
 	int M = b->Columnas;
 	int i;
 	int j;
-	int k = 0;
 	int dulce;
 	int** mTablero = b->matrizSTablero;
 	// Revisamos Filas.
@@ -580,23 +580,20 @@ Position* checkCandies(Board* b)
 		{	
 			dulce = mTablero[i][j];
 			// Desde el punto hasta j<M-2
-			if(j < (M-2) && mTablero[i][j] == dulce && mTablero[i][j+1] == dulce
-				&& mTablero[i][j+2])
+			if(j < (M-2) && mTablero[i][j+1] == dulce
+				&& mTablero[i][j+2] == dulce)
 			{
+				printf("%d\n", mTablero[i][j]);
+				printf("%d\n", mTablero[i][j+1]);
+				printf("%d\n", mTablero[i][j+2]);
+				printf("Condicion?\n");
 				k = 0;
 				// En caso de necesitar el dulce, meterlo al final.
 				while(mTablero[i][j+k] == dulce)
 				{
-					if (k % 2 == 0)
-					{
-						exDulces[k] = i;
-						k++;
-					} else 
-					{
-						exDulces[k] = (j+k);
-						k++;
-					}
-					
+					exDulces[k] = i;
+					exDulces[k+1] = (j+k+1);
+					k++;	
 				}
 				checkCandy->exDulces = exDulces;
 				return checkCandy;
@@ -604,29 +601,28 @@ Position* checkCandies(Board* b)
 		}
 	}
 	// Revisar colummna;
+	printf("for 2\n");
 	for (j = 0; j < M; j++)
 	{
 		for (i = 0; i < N-2; i++)
 		{	
 			dulce = mTablero[i][j];
 			// Desde el punto hasta i<N-2
-			if(i < (N-2) && mTablero[i][j] == dulce && mTablero[i+1][j] == dulce
-				&& mTablero[i+2][j])
+			if(i < (N-2) && mTablero[i+1][j] == dulce
+				&& mTablero[i+2][j] == dulce)
 			{
 				k = 0;
 				while(mTablero[i+k][j] == dulce)
 				{
-					if (k % 2 == 0)
-					{
-						exDulces[k] = (i+k);
-						k++;
-					} else 
-					{
-						exDulces[k] = j;
-						k++;
-					}
-					
+					exDulces = (int*)malloc(sizeof(int)*(k+1));
+					printf("soy k%d\n", k);
+					exDulces[k] = (i+k);
+					k++;
+					exDulces[k] = j;
+					k++;		
 				}
+				// Agregar un contador para luego asignar memoria y repartir los dulces.
+				// crear una funcion que haga esto, retorna la lista y cantidad.
 				checkCandy->exDulces = exDulces;
 				return checkCandy;
 			}			
@@ -1008,6 +1004,7 @@ void menuCrearTablero()
 	int opcionIngresada = obtenerOpcionIngresada(0, 3, MENU_CREAR_TABLERO);
 	Params* nuevoParametro;
 	Board* Tablero;
+	Position* pos;
 
 	switch (opcionIngresada)
 	{
@@ -1017,17 +1014,16 @@ void menuCrearTablero()
 					//int id;
 					//saveBoard(Tablero, &id);
 					//printf("Soy la id del menu: %d\n", id);
-					//Tablero = loadBoard(1491795455);
+					Tablero = loadBoard(1491809684);
 					//int error = checkBoard(Tablero);
 					//if(error == 1)printf("True\n");
 					//if(error == 0)printf("False\n");
-					//print(Tablero);
-					int* hola = checkCandies(Tablero);
-					for (int i = 0; i < (sizeof(hola)/sizeof(int)); ++i)
-					{
-						hola[i];
-					}
+					print(Tablero);
+					pos = checkCandies(Tablero);
+					int* hola = pos->exDulces;
+
 					
+				
 					seleccionMenu(MENU_JUGAR_MODO_PRUEBA);
 					break;
 		case INTERMEDIO: nuevoParametro = crearParametrosTablero(INTERMEDIO, 7, 7);
