@@ -12,7 +12,7 @@
 
 // #define Menu
 #define MENU_CREAR_TABLERO 3
-#define MENU_JUGAR_MODO_PRUEBA 2
+#define MENU_INICIO 2
 #define MENU_PRINCIPAL 1
 #define MENU_SALIR 0
 
@@ -20,9 +20,8 @@
 #define FACIL 1
 #define INTERMEDIO 2
 #define DIFICIL 3
-#define VOLVER_MENU_JUGAR_MODO_PRUEBA 0
 
-// #define MENU_JUGAR_MODO_PRUEBA
+// #define MENU_PRINCIPAL
 #define JUGAR_MOVER 1
 #define CREAR_TABLERO 2
 #define GUARDAR_TABLERO 3
@@ -30,11 +29,6 @@
 #define VERIFICAR_TABLERO 5
 #define VERIFICAR_CARAMELOS 6
 #define MOSTRAR_TABLERO 7
-#define VOLVER_MENU_PRINCIPAL 0
-
-// #define MENU_PRINCIPAL
-#define JUGAR 1
-#define JUGAR_MODO_PRUEBA 2
 #define SALIR 0
 
 // #define MENU_SALIR
@@ -95,11 +89,19 @@ typedef struct Posicion
 	int* exDulces;
 	int Eliminados;
 	int Dulce;
+	int pOri;
+	int pDes;
+	Candy candy;
 
 } Position ;
 
 
-
+typedef enum Code {
+	OK, 
+	ERR_FILE_NOT_FOUND,
+	ERR_FILE_NOT_PERM,
+	IMPOSSIBLE_VALID_BOARD
+} code;
 
 // Cabecera
 
@@ -114,15 +116,16 @@ int** obtenerMatrizCandy(int N,int M,Params *params);
 int convertirFruta(Board* b, int Filas, int Columnas);
 
 // MenuJugarModoPrueba
-void jugarMover();
-Board* createBoard(int N, int M, Params params);
-void saveBoard(Board* b, int* id);
-Board* loadBoard(int id);
-Position* checkCandies(Board* b);
-int validarTablero(int** mTablero, int N, int M);
-void print(Board *b);
+int play(Board* b, Position pOri, Position pDes, int* turnos, code *statusCode);
+Board* createBoard(int N, int M, Params params, code *statusCode);
+void saveBoard(Board* b, int* id, code *statusCode);
+Board* loadBoard(int id, code *statusCode);
+Position* checkCandies(Board* b, code *statusCode);
+int checkBoard(Board* b, code *statusCode);
+void print(Board *b, code *statusCode);
 
 // MenuPrincipal
+int validarTablero(int** mTablero, int N, int M);
 void jugar();
 char* obtenerFecha(int *id);
 char* obtenerNombre(int *id);
@@ -130,17 +133,9 @@ int obtenerID();
 
 // Verificacion - Validacion
 int obtenerOpcionIngresada(int valMin, int valMax, int tipoMenu);
-void seleccionMenu(int tipoMenu);
-
-//Seleccion Menu
-void menuPrincipal();
-void menuJugarModoPrueba();
-void menuCrearTablero();
-void menuSalir();
 
 void mostrarMenu(int tipoMenu);
 void mostrarMenuPrincipal();
-void mostrarMenuJugarModoPrueba();
 void mostrarMenuCrearTablero();
 void mostrarMenuSalir();
 
@@ -155,17 +150,13 @@ int* revisarDulcesColumna(int N, int M, int* exDulces, int** mTablero, Position*
 
 // Funciones
 
-/*enum code {
-	OK, 
-	ERR_FILE_NOT_FOUND,
-	ERR_FILE_NOT_PERM,
-	IMPOSSIBLE_VALID_BOARD,
-};*/
 
-void jugarMover(){}
+
+int play(Board* b, Position pOri, Position pDes, int* turnos, code *statusCode)
+{}
 
 // Funcion que crea un tablero valido.
-Board* createBoard(int N, int M, Params params)
+Board* createBoard(int N, int M, Params params, code *statusCode)
 {
 	Board * nuevoTablero = (Board*)malloc(sizeof(Board));
 	int** mTablero = obtenerMatrizCandy(N, M, &params);
@@ -178,16 +169,16 @@ Board* createBoard(int N, int M, Params params)
 	nuevoTablero->Columnas = M;
 	// Guardamos la dificultad.
 	nuevoTablero->Dificultad = params.Dificultad;
-	print(nuevoTablero);
-
+	*statusCode = OK;
 	return nuevoTablero;
 }
 
 int** obtenerMatrizCandy(int N,int M,Params *params)
 {
 	int **mTablero = (int **)malloc(N * sizeof(int *));
-					for (int i = 0; i < N; ++i)
-					mTablero[i] = (int *)malloc(M * sizeof(int));
+					int h;
+					for (h = 0; h < N; ++h)
+					mTablero[h] = (int *)malloc(M * sizeof(int));
 
 	// Mientras validar tablero sea falso, regeneramos el tablero.
 	int* listaCaramelo;
@@ -350,7 +341,7 @@ int* obtenerListaCaramelo(int N,int M,Params *params)
 	return listaCaramelo;	
 }
 
-void saveBoard(Board* b, int* id)
+void saveBoard(Board* b, int* id, code *statusCode)
 {
 	// Obtenemos la ID del tablero a guardar.
 	*id = obtenerID();
@@ -367,7 +358,7 @@ void saveBoard(Board* b, int* id)
     
     if(archivoSalida == NULL)
     {
-        printf("Error al abrir archivo\n");
+        *statusCode = ERR_FILE_NOT_FOUND;
     }
 
     fprintf(archivoSalida, "%d", b->Dificultad);
@@ -391,6 +382,7 @@ void saveBoard(Board* b, int* id)
 	//Escribimos la hora.
 	char* hora = obtenerFecha(id);
 	fprintf(archivoSalida, "\n%s", hora);
+	*statusCode = OK;
     fclose(archivoSalida);
 }
 
@@ -426,7 +418,7 @@ int obtenerID()
 }
 
 
-Board* loadBoard(int id)
+Board* loadBoard(int id, code *statusCode)
 {
 	int N = 0;
 	int M = 0;
@@ -441,8 +433,9 @@ Board* loadBoard(int id)
 	archivoEntrada = fopen(loadID, "r");
 	if(archivoEntrada == NULL)
     {
-        printf("Archivo no encontrado.");
+        *statusCode = ERR_FILE_NOT_FOUND;
     }
+    else {
     fscanf(archivoEntrada,"%d",&dificultad);
 	fscanf(archivoEntrada,"%d",&N);
 	fscanf(archivoEntrada,"%d",&M);
@@ -454,8 +447,9 @@ Board* loadBoard(int id)
 	char final;
 
 	mTablero =	(int **)malloc(N * sizeof(int *));
-				for (int i = 0; i < N; ++i)
-				mTablero[i] = (int *)malloc(M * sizeof(int));
+				int h;
+				for (h = 0; h < N; ++h)
+				mTablero[h] = (int *)malloc(M * sizeof(int));
 	i = 0;
 	while (i < N)
 	{
@@ -481,12 +475,12 @@ Board* loadBoard(int id)
 	cargarTablero->Columnas = M;
 	cargarTablero->idGuardado = id;
 	cargarTablero->Dificultad = dificultad;
-
-	printf("Archivo leido Correctamente.\n");
+	*statusCode = OK;
+	}
 	return cargarTablero;
 }
 
-int checkBoard(Board* b)
+int checkBoard(Board* b, code *statusCode)
 {
 	int** Tablero = b->matrizSTablero;
 	int N = b->Filas;
@@ -508,15 +502,15 @@ int checkBoard(Board* b)
 
 	// Tercera verficiamos si contador es mayor o igual a 6.
 
-	printf("ver1 :%d\n", ver1);
-	printf("ver2 :%d\n", ver2);
 	// Si las 3 verificaciones son verdaderas, entonces el tablero
 	// es valido. De modo contrario es Falso e invalido.
 	if (ver1 == TRUE && ver2 == TRUE)
 	{
+		*statusCode = OK;
 		return TRUE;
 	} else
 	{
+		*statusCode = IMPOSSIBLE_VALID_BOARD;
 		return FALSE;
 	}
 }
@@ -565,7 +559,7 @@ int verificarDulces(int** Tablero, int dificultad, int N, int M)
 	return TRUE;
 }
 
-Position* checkCandies(Board* b)
+Position* checkCandies(Board* b, code *statusCode)
 {
 	Position* checkCandy = (Position*)malloc(sizeof(Position));
 	int* exDulces;
@@ -581,15 +575,15 @@ Position* checkCandies(Board* b)
 		return checkCandy;
 	}
 	// Revisamos Columnas.
-	printf("revisare columnas\n");
 	exDulces = revisarDulcesColumna(N, M, exDulces, mTablero, checkCandy);
-	printf("revise columnas\n");
 	if(exDulces != 0)
 	{
 		checkCandy->exDulces = exDulces;
 		return checkCandy;
 	}
 	// No encontramos dulces.
+	printf("No hay dulces para romper.\n");
+	*statusCode = OK;
 	return checkCandy;
 }
 
@@ -643,7 +637,8 @@ int* revisarDulcesFila(int N, int M, int* exDulces, int** mTablero, Position* ch
 					incremento++;
 				}
 				#ifdef DEBUG
-				for (int o = 0; o < checkCandy->exDulces; ++o)
+				int o;
+				for (o = 0; o < checkCandy->exDulces; ++o)
 				{
 					printf("-> %d\n", exDulces[o]);
 				}
@@ -705,7 +700,8 @@ int* revisarDulcesColumna(int N, int M, int* exDulces, int** mTablero, Position*
 					incremento++;
 				}
 				#ifdef DEBUG
-				for (int o = 0; o < checkCandy->exDulces; ++o)
+				int o;
+				for (o = 0; o < checkCandy->exDulces; ++o)
 				{
 					printf("-> %d\n", exDulces[o]);
 				}
@@ -717,7 +713,7 @@ int* revisarDulcesColumna(int N, int M, int* exDulces, int** mTablero, Position*
 	return FALSE; 
 }
 
-void print(Board *b)
+void print(Board *b, code *statusCode)
 {
 	int Filas = b->Filas;
 	// ESTE CODIGO SIRVE
@@ -734,7 +730,8 @@ void print(Board *b)
 		if(count == 0 && cantFila == 0)
 		{
 			printf("\n    ");
-			for (int i = 0; i < Columnas; ++i)
+			int i;
+			for (i = 0; i < Columnas; ++i)
 			{
 				if (i > 9)
 				{
@@ -749,7 +746,8 @@ void print(Board *b)
 		if(count == 0)
 		{
 			printf("\n    #");
-			for (int i = 0; i < Columnas; ++i)
+			int i;
+			for (i = 0; i < Columnas; ++i)
 			{
 				printf("#####");
 				printf("#");
@@ -761,7 +759,8 @@ void print(Board *b)
 		if(count == 1)
 		{
 			printf("\n    #");
-			for (int i = 0; i < Columnas; ++i)
+			int i;
+			for (i = 0; i < Columnas; ++i)
 			{
 				printf("     ");
 				printf("#");
@@ -780,7 +779,8 @@ void print(Board *b)
 		if (count == 2)
 		{
 			printf("#");
-			for (int i = 0; i < Columnas; ++i)
+			int i;
+			for (i = 0; i < Columnas; ++i)
 			{
 				printf("  %c  ", convertirFruta(b, cantFila, i));
 				printf("#");
@@ -793,7 +793,8 @@ void print(Board *b)
 		{
 			
 			printf("\n    #");
-			for (int i = 0; i < Columnas; ++i)
+			int i;
+			for (i = 0; i < Columnas; ++i)
 			{
 				printf("     ");
 				printf("#");
@@ -805,7 +806,8 @@ void print(Board *b)
 		if (cantFila == Filas-1)
 		{
 			printf("\n    #");
-			for (int i = 0; i < Columnas; ++i)
+			int i;
+			for (i = 0; i < Columnas; ++i)
 			{
 				printf("#####");
 				printf("#");
@@ -947,10 +949,10 @@ int verificarDificultad(int Dificultad, int Candy, int *CanRestante)
 									  MFRUTILLA, TUTIFRUTI};
 	int arregloDulcesDIFICIL[9] = {CEREZA, FRUTILLA, MANZANA, DURAZNO,
 									MCEREZA, MFRUTILLA, MMANZANA, TUTIFRUTI, LLAVE};
-
+	int i;
 	if (Dificultad == FACIL)
 	{
-		for (int i = 0; i < 3; ++i)
+		for (i = 0; i < 3; ++i)
 		{
 			if(Candy == arregloDulcesFACIL[i]){
 				*CanRestante += 1;
@@ -962,7 +964,7 @@ int verificarDificultad(int Dificultad, int Candy, int *CanRestante)
 
 	if (Dificultad == INTERMEDIO)
 	{
-		for (int i = 0; i < 6; ++i)
+		for (i = 0; i < 6; ++i)
 		{
 			if(Candy == arregloDulcesINTERMEDIO[i]){
 				*CanRestante += 1;
@@ -974,7 +976,7 @@ int verificarDificultad(int Dificultad, int Candy, int *CanRestante)
 
 	if (Dificultad == DIFICIL)
 	{
-		for (int i = 0; i < 9; ++i)
+		for (i = 0; i < 9; ++i)
 		{
 			if(Candy == arregloDulcesDIFICIL[i]){
 				*CanRestante += 1;
@@ -1020,121 +1022,9 @@ int obtenerOpcionIngresada(int valMin, int valMax, int tipoMenu)
 	return leerOpcion;
 }
 
-
-void seleccionMenu(int tipoMenu)
+void menuCrearTablero(Params* Parametros, Board* Tablero)
 {
-	// Muestra el menu y retorna esa opcion, asi podemos controlar mejor los datos generales
-	switch (tipoMenu)
-	{
-		case MENU_PRINCIPAL: mostrarMenu(MENU_PRINCIPAL);
-							 menuPrincipal();					 
-							 break;
-		case MENU_JUGAR_MODO_PRUEBA: mostrarMenu(MENU_JUGAR_MODO_PRUEBA); 
-									 menuJugarModoPrueba();
-									 break;
-		case MENU_SALIR: mostrarMenu(MENU_SALIR);
-						 menuSalir();
-				 		 break;
-	}
-}
-
-void menuPrincipal()
-{
-	// Muestra el MenuPrincipal.
-	int opcionIngresada = obtenerOpcionIngresada(0, 2, MENU_PRINCIPAL);
-
-	switch (opcionIngresada)
-	{
-		case JUGAR: jugar();
-					break;
-		case JUGAR_MODO_PRUEBA: seleccionMenu(MENU_JUGAR_MODO_PRUEBA);
-								break;
-		case SALIR: seleccionMenu(MENU_SALIR);
-					break;
-	}
-}
-
-void menuJugarModoPrueba()
-{
-	int opcionIngresada = obtenerOpcionIngresada(0, 7, MENU_JUGAR_MODO_PRUEBA);
-	Params* Parametros;
-	Board* Tablero;
-	Position* checkCandy;
-
-	switch (opcionIngresada)
-	{
-		case JUGAR_MOVER: //jugarMover();
-						  break;
-		case CREAR_TABLERO: mostrarMenuCrearTablero(MENU_CREAR_TABLERO);
-							menuCrearTablero();
-						  	break;
-		case GUARDAR_TABLERO: //saveBoard(b, &id);
-						  	  break;
-		case CARGAR_TABLERO: //loardBoard(id);
-						  	 break;
-		case VERIFICAR_TABLERO: //checkBoard(b);
-						  		break;
-		case VERIFICAR_CARAMELOS: //checkCandies(b);
-						  		  break;
-		case MOSTRAR_TABLERO: //print(b);
-							  break;
-		case VOLVER_MENU_PRINCIPAL: seleccionMenu(MENU_PRINCIPAL);
-					 break;
-	}
-}
-
-void menuCrearTablero()
-{
-	int opcionIngresada = obtenerOpcionIngresada(0, 3, MENU_CREAR_TABLERO);
 	
-
-	switch (opcionIngresada)
-	{
-		case FACIL: nuevoParametro = crearParametrosTablero(FACIL, 5, 5);
-					Tablero = createBoard(5, 5, *nuevoParametro);
-					print(Tablero);
-					//int id;
-					//saveBoard(Tablero, &id);
-					//printf("Soy la id del menu: %d\n", id);
-					Tablero = loadBoard(1491809684);
-					//int error = checkBoard(Tablero);
-					//if(error == 1)printf("True\n");
-					//if(error == 0)printf("False\n");
-					print(Tablero);
-					pos = checkCandies(Tablero);
-					int* hola = pos->exDulces;
-
-					
-				
-					seleccionMenu(MENU_JUGAR_MODO_PRUEBA);
-					break;
-		case INTERMEDIO: nuevoParametro = crearParametrosTablero(INTERMEDIO, 7, 7);
-						 Tablero = createBoard(7, 7, *nuevoParametro);
-						 print(Tablero);
-						 seleccionMenu(MENU_JUGAR_MODO_PRUEBA);
-						 break;
-		case DIFICIL: nuevoParametro = crearParametrosTablero(DIFICIL, 10, 10);
-					  Tablero = createBoard(10, 10, *nuevoParametro);
-					  print(Tablero);
-					  seleccionMenu(MENU_JUGAR_MODO_PRUEBA);
-					  break;
-		case VOLVER_MENU_JUGAR_MODO_PRUEBA: seleccionMenu(MENU_JUGAR_MODO_PRUEBA);
-										 	break; 
-	}
-}
-
-void menuSalir()
-{
-	// Muestra el MenuSalir.
-	int opcionIngresada = obtenerOpcionIngresada(0, 1, MENU_SALIR);
-	
-	switch (opcionIngresada)
-	{
-		case CONF_SALIR: printf("Estoy saliendo...\n");;
-					break;
-		case CONF_NO_SALIR: seleccionMenu(MENU_PRINCIPAL);
-					   break;
-	}
 }
 
 void mostrarMenu(int tipoMenu)
@@ -1143,31 +1033,29 @@ void mostrarMenu(int tipoMenu)
 	{
 		case MENU_PRINCIPAL: mostrarMenuPrincipal();
 							 break;
-		case MENU_JUGAR_MODO_PRUEBA: mostrarMenuJugarModoPrueba();
-							 		 break;
 		case MENU_CREAR_TABLERO: mostrarMenuCrearTablero();
 								 break;
-		case MENU_SALIR: mostrarMenuSalir();
-						 break;
+		case MENU_INICIO: mostrarMenuInicio();
+						  break;
 	}
+}
+void mostrarMenuInicio()
+{
+	printf("\n##############################\n");
+	printf("#        Candy Crush         #\n");
+	printf("#           Ver.1            #\n");
+	printf("# Paradigmas de Programacion #\n");
+	printf("#                            #\n");
+	printf("# Alumno: Cristobal Nicolas  #\n");
+	printf("#         Medrano Alvarado   #\n");
+	printf("#                            #\n");
+	printf("# RUT: 19.083.864-1          #\n");
+	printf("##############################\n\n");
 }
 
 void mostrarMenuPrincipal()
 {
-	printf("\n##############################\n");
-	printf("#        Candy Crush         #\n");
-	printf("#            V.13            #\n");
-	printf("# Paradigmas de Programacion #\n");
-	printf("##############################\n\n");
-	printf("Menu del juego, ingrese numero de opcion deseada: \n");
-	printf("1.- Jugar\n");
-	printf("2.- Jugar en modo de Prueba\n");
-	printf("0.- Salir\n");
-}
-
-void mostrarMenuJugarModoPrueba()
-{
-	printf("Menu Jugar, ingrese numero de opcion deseada:\n");
+	printf("Menu del juego, ingrese numero de opcion deseada:\n");
 	printf("1.- Jugar (Mover)\n");
 	printf("2.- Crear Tablero\n");
 	printf("3.- Guardar Tablero\n");
@@ -1175,7 +1063,7 @@ void mostrarMenuJugarModoPrueba()
 	printf("5.- Verificar Tablero\n");
 	printf("6.- Verificar Caramelos\n");
 	printf("7.- Mostrar Tablero\n");
-	printf("0.- Volver\n");
+	printf("0.- Salir\n");
 }
 
 void mostrarMenuCrearTablero()
@@ -1184,20 +1072,132 @@ void mostrarMenuCrearTablero()
 	printf("1.- Nivel Facil\n");
 	printf("2.- Nivel Intermedio\n");
 	printf("3.- Nivel Dificil\n");
-	printf("0.- Volver\n");
 }
 
-void mostrarMenuSalir()
-{
-	printf("- Esta seguro que desea salir?, ingrese numero de opcion deseada:\n");
-	printf("1.- Si\n");
-	printf("0.- No\n");
-}
 
 int main(int argc, char const *argv[])
 {
 	srand(time(NULL));
+	Params* Parametros = NULL;
+	Board* Tablero = NULL;
+	Position* checkCandy = NULL;
+	int id;
+	int opcionIngresada;
+	int SubopcionIngresada;
+	int code;
+	mostrarMenu(MENU_INICIO);
+	do{
+		mostrarMenu(MENU_PRINCIPAL);
+		opcionIngresada = obtenerOpcionIngresada(0, 7, MENU_PRINCIPAL);
 
-	seleccionMenu(MENU_PRINCIPAL);
+		switch (opcionIngresada)
+		{
+			case JUGAR_MOVER: //jugarMover();
+							  break;
+			case CREAR_TABLERO: mostrarMenuCrearTablero(MENU_CREAR_TABLERO);
+								SubopcionIngresada = obtenerOpcionIngresada(1, 3, MENU_CREAR_TABLERO);
+								switch (SubopcionIngresada)
+								{
+									case FACIL: Parametros = crearParametrosTablero(FACIL, 5, 5);
+												Tablero = createBoard(5, 5, *Parametros, &code);
+												if (code == 0)
+												{
+													printf("Estado: OK\n");
+												}											
+												
+												break;
+									case INTERMEDIO: Parametros = crearParametrosTablero(INTERMEDIO, 7, 7);
+													 Tablero = createBoard(7, 7, *Parametros, &code);
+													 if (code == 0)
+														{
+															printf("Estado: OK\n");
+														}	
+													 break;
+									case DIFICIL: Parametros = crearParametrosTablero(DIFICIL, 10, 10);
+												  Tablero = createBoard(10, 10, *Parametros, &code);
+												  if (code == 0)
+													{
+														printf("Estado: OK\n");
+													}	
+												  break;
+								}
+							  	break;
+			case GUARDAR_TABLERO: if(Tablero != NULL)
+									{
+										saveBoard(Tablero, &id, &code);
+										printf("Su ID es: %d\n", id);
+										if (code == 0)
+										{
+											printf("Estado: OK\n");
+										}
+									} else 
+									{
+										printf("Debe crear o cargar un tablero.\n");
+									}
+							  	  break;
+			case CARGAR_TABLERO: printf("Ingrese la ID a cargar.\n");
+								 fflush(stdin);
+								 if (scanf("%d", &id) != 0)
+								 {	
+								 	Tablero = loadBoard(id, &code);
+								 	if (code == 0)
+										{
+											printf("Estado: OK\n");
+										}
+									if(code == 1)
+										{
+											printf("Estado: ERR_FILE_NOT_FOUND\n");
+										}
+								 }
+							  	 break;
+			case VERIFICAR_TABLERO: 
+									if(Tablero != NULL)
+									{
+										int error = checkBoard(Tablero, &code);
+										if (code == 0)
+										{
+											if(error == 1)printf("True\n");
+											printf("Estado: OK\n");
+										}
+									if (code == 3)
+										{
+											if(error == 0)printf("False\n");
+											printf("Estado: IMPOSSIBLE_VALID_BOARD\n");
+										}
+									} else 
+									{
+										printf("Debe crear o cargar un tablero.\n");
+									}
+							  		break;
+			case VERIFICAR_CARAMELOS: 
+									if(Tablero != NULL)
+									{
+										checkCandies(Tablero, &code);
+										if (code == 0)
+										{
+											printf("Estado: OK\n");
+										}
+									} else 
+									{
+										printf("Debe crear o cargar un tablero.\n");
+									}
+							  		break;
+			case MOSTRAR_TABLERO:
+									if(Tablero != NULL)
+									{
+										print(Tablero, &code);
+										if (code == 0)
+										{
+											printf("Estado: OK\n");
+										}
+									} else 
+									{
+										printf("Debe crear o cargar un tablero.\n");
+									}
+								  	break;
+			case SALIR: break;
+		}
+
+	} while (opcionIngresada != SALIR);
 	return 0;
 }
